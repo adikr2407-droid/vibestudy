@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeStudy — Engineering Study Squad Matcher</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+            },
+            accent: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2',
+            },
+            surface: {
+              900: '#0B0F19',
+              800: '#111827',
+              700: '#1F2937',
+              600: '#374151',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-surface-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+
+  <!-- Background Ambient Glow -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-40 left-1/4 w-96 h-96 bg-brand-600/15 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-20 w-96 h-96 bg-accent-500/15 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-20 left-1/3 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="relative z-10 border-b border-surface-700/60 bg-surface-900/80 backdrop-blur-md sticky top-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="resetToOnboarding()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/25">
+          <span class="text-xl font-black text-white">⚡</span>
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">VibeStudy</span>
+          <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30 font-medium">Squad Engine</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button id="viewPoolBtn" class="inline-flex items-center text-xs text-slate-300 bg-surface-800 hover:bg-surface-700 px-3 py-1.5 rounded-lg border border-surface-600 transition-all gap-1.5" title="View all student profiles stored in database">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Peer Pool:</span>
+          <span id="headerPeerCount" class="font-bold text-accent-400 font-mono">6</span>
+        </button>
+
+        <button id="openRegisterModalBtn" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600/30 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/40 transition-all flex items-center gap-1 font-semibold" title="Add a student profile directly to SQLite">
+          <span>+ Register Profile</span>
+        </button>
+
+        <button id="resetDbBtn" class="text-xs px-3 py-1.5 rounded-lg border border-surface-600 text-slate-300 hover:text-white hover:bg-surface-800 transition-all flex items-center gap-1.5" title="Reset peer scores and database to default">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- STATE 1: ONBOARDING FORM -->
+    <section id="onboardingSection" class="transition-all duration-500">
+      <!-- Hero Title -->
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-800 border border-surface-700 text-xs text-brand-400 font-medium mb-4 shadow-sm">
+          <span>🎓 Engineering Undergraduate Squad Matcher</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          Assemble Your High-Synergy <br/>
+          <span class="bg-gradient-to-r from-brand-400 via-indigo-300 to-accent-400 bg-clip-text text-transparent">4-Person Study Squad</span>
+        </h1>
+        <p class="mt-3 text-sm sm:text-base text-slate-400">
+          Matched on schedule sync (+40 pts), target CGPA proximity (+30 pts), and reciprocal skill swaps (+30 pts).
+        </p>
+
+        <!-- Quick Demo Fill -->
+        <div class="mt-6 flex justify-center">
+          <button type="button" id="quickDemoBtn" class="group px-4 py-2 rounded-xl bg-surface-800/80 hover:bg-surface-700 border border-brand-500/40 text-brand-300 text-xs font-semibold flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-brand-500/20">
+            <span class="text-base group-hover:rotate-12 transition-transform">⚡</span>
+            <span>Autofill Sample Profile (1-Click Demo)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="max-w-2xl mx-auto bg-surface-800/90 border border-surface-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <form id="onboardingForm" class="space-y-6">
+          
+          <!-- College Selection (Selective Campus Matching) -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label for="userCollege" class="block text-xs font-semibold uppercase tracking-wider text-accent-400">
+                🏛️ Your College / University
+              </label>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-accent-500/20 text-accent-300 border border-accent-500/30 font-mono">
+                CAMPUS EXCLUSIVE
+              </span>
+            </div>
+            <select id="userCollege" required class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all">
+              <!-- Populated by JS -->
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Selective matching enabled: You will strictly be matched with peers attending this same college.</p>
+          </div>
+
+          <!-- Name & Section -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="userName" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Your Name</label>
+              <input type="text" id="userName" required placeholder="e.g. Alex Chen" class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label for="userSection" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Section / Branch</label>
+              <input type="text" id="userSection" required placeholder="e.g. CSE-A, ECE-B" class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all" />
+            </div>
+          </div>
+
+          <!-- Study Hours Cards -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Peak Study Hours (+40 Points)</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              <!-- Night Owl Option -->
+              <label class="relative flex items-center p-4 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500/80 transition-all study-hour-card">
+                <input type="radio" name="studyHours" value="Night Owl" checked class="sr-only study-hour-radio" />
+                <div class="flex items-center space-x-3 w-full">
+                  <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl flex-shrink-0">
+                    🌙
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-sm font-bold text-white flex items-center justify-between">
+                      <span>Night Owl</span>
+                      <span class="selection-check text-brand-400 text-sm font-bold">✓</span>
+                    </div>
+                    <div class="text-xs text-slate-400">10:00 PM – 4:00 AM</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Early Bird Option -->
+              <label class="relative flex items-center p-4 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500/80 transition-all study-hour-card">
+                <input type="radio" name="studyHours" value="Early Bird" class="sr-only study-hour-radio" />
+                <div class="flex items-center space-x-3 w-full">
+                  <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                    🌅
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-sm font-bold text-white flex items-center justify-between">
+                      <span>Early Bird</span>
+                      <span class="selection-check hidden text-brand-400 text-sm font-bold">✓</span>
+                    </div>
+                    <div class="text-xs text-slate-400">6:00 AM – 12:00 PM</div>
+                  </div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Target CGPA Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label for="cgpaSlider" class="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Target CGPA (+30 Points Proximity)
+              </label>
+              <div class="flex items-center gap-1.5 px-3 py-1 bg-surface-900 rounded-lg border border-surface-600">
+                <span class="text-xs text-slate-400">Goal:</span>
+                <span id="cgpaVal" class="text-sm font-extrabold text-accent-400">8.5</span>
+              </div>
+            </div>
+            <input type="range" id="cgpaSlider" min="6.0" max="10.0" step="0.1" value="8.5" class="w-full h-2 bg-surface-700 rounded-lg appearance-none cursor-pointer accent-accent-500" />
+            <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-mono">
+              <span>6.0</span>
+              <span>7.0</span>
+              <span>8.0</span>
+              <span>9.0</span>
+              <span>10.0</span>
+            </div>
+          </div>
+
+          <!-- Subjects: Strong & Weak -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="strongSubject" class="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+                💪 Strong Subject (You Teach)
+              </label>
+              <select id="strongSubject" required class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                <option value="">Select Strong Subject...</option>
+              </select>
+            </div>
+            <div>
+              <label for="weakSubject" class="block text-xs font-semibold uppercase tracking-wider text-rose-400 mb-2">
+                🎯 Weak Subject (You Need Help)
+              </label>
+              <select id="weakSubject" required class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all">
+                <option value="">Select Weak Subject...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Bio & Notes -->
+          <div>
+            <label for="userBio" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Short Bio / Study Focus (Optional)</label>
+            <input type="text" id="userBio" placeholder="e.g. Aiming for 9+ CGPA in semester finals, loves grinding LeetCode" class="w-full px-4 py-2.5 bg-surface-900/90 border border-surface-600 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all" />
+          </div>
+
+          <!-- Save to Candidate Pool Checkbox -->
+          <div class="p-3.5 rounded-xl bg-surface-900/90 border border-brand-500/30 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="saveToPoolCheckbox" checked class="w-4 h-4 rounded text-brand-500 bg-surface-800 border-surface-600 focus:ring-brand-500 focus:ring-offset-0 cursor-pointer" />
+              <label for="saveToPoolCheckbox" class="text-xs text-slate-300 cursor-pointer">
+                <span class="font-bold text-white block">💾 Store My Profile in Campus Peer Pool</span>
+                <span class="text-slate-400 text-[11px]">Saves your data into the database so other engineering students can match with you.</span>
+              </label>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/40 font-mono flex-shrink-0">ACTIVE POOL</span>
+          </div>
+
+          <!-- Alert for subject conflict -->
+          <div id="subjectError" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <svg class="w-4 h-4 text-rose-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+            <span>Strong and weak subjects cannot be the same. Please select different subjects.</span>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-brand-600 via-brand-500 to-accent-600 text-white font-bold text-sm tracking-wide shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+            <span>✨ Match My 4-Person Study Squad</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+          </button>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- STATE 2: MATCHING SCANNER ANIMATION -->
+    <section id="scanningSection" class="hidden py-24 text-center">
+      <div class="max-w-md mx-auto">
+        <div class="relative w-24 h-24 mx-auto mb-6">
+          <div class="absolute inset-0 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin"></div>
+          <div class="absolute inset-2 rounded-full border-4 border-accent-500/20 border-b-accent-400 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+          <div class="w-full h-full flex items-center justify-center text-3xl">
+            ⚡
+          </div>
+        </div>
+        <h3 class="text-xl font-bold text-white">Running Match Engine...</h3>
+        <p class="text-xs text-slate-400 mt-2 font-mono" id="scanStatusText">Evaluating schedule sync & skill swaps across candidates...</p>
+      </div>
+    </section>
+
+    <!-- STATE 3: RESULTS SCREEN -->
+    <section id="resultsSection" class="hidden space-y-8 transition-all duration-500">
+      
+      <!-- Top Action Bar & Synergy Banner -->
+      <div class="bg-surface-800/90 border border-surface-700 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold border border-brand-500/30 uppercase tracking-wider">
+              Squad Confirmed
+            </span>
+            <span class="px-3 py-1 rounded-full bg-accent-500/20 text-accent-300 text-xs font-bold border border-accent-500/30 flex items-center gap-1">
+              <span>🏛️</span>
+              <span id="squadCollegeBadge">Apex Institute of Technology</span>
+            </span>
+            <span class="text-xs text-slate-400">4 Members • Same Campus Verified</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black text-white">
+            Squad <span class="bg-gradient-to-r from-brand-400 to-accent-400 bg-clip-text text-transparent" id="squadName">Apex</span>
+          </h2>
+          <p class="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap" id="squadStrengthPills">
+            <!-- Dynamic Subject Pills -->
+          </p>
+        </div>
+
+        <!-- Synergy Score Meter -->
+        <div class="flex items-center gap-6 self-start md:self-auto bg-surface-900/80 border border-surface-700/80 px-6 py-4 rounded-xl">
+          <div class="text-right">
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Squad Synergy</div>
+            <div class="text-3xl font-extrabold text-accent-400 font-mono" id="synergyScoreVal">92.4%</div>
+          </div>
+          <div class="w-14 h-14 rounded-full border-4 border-surface-700 relative flex items-center justify-center">
+            <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+              <path class="text-surface-700" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path id="synergyCircle" class="text-accent-400 transition-all duration-1000" stroke-dasharray="92, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="absolute text-xs font-bold text-white">★</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+          <button onclick="resetToOnboarding()" class="px-4 py-2.5 rounded-xl border border-surface-600 text-slate-300 hover:text-white hover:bg-surface-700 text-xs font-semibold transition-all">
+            ← Change Preferences
+          </button>
+        </div>
+      </div>
+
+      <!-- Synchronized 50-minute Pomodoro Study Timer -->
+      <div class="bg-gradient-to-r from-surface-800/90 via-surface-800 to-indigo-950/40 border border-brand-500/30 rounded-2xl p-6 shadow-xl backdrop-blur-md">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+          
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center text-2xl">
+              ⏱️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-bold text-white">Squad Pomodoro Timer</h3>
+                <span id="timerPill" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold uppercase tracking-wider">
+                  Deep Work Sprint
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">Synchronized 50-minute focus session for your 4-person squad.</p>
+            </div>
+          </div>
+
+          <!-- Timer Display & Controls -->
+          <div class="flex items-center gap-6">
+            <div class="text-center font-mono">
+              <div id="timerDisplay" class="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-md">
+                50:00
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="timerToggleBtn" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-lg shadow-brand-500/30 transition-all flex items-center gap-1.5">
+                <span id="timerPlayIcon">▶</span>
+                <span id="timerActionText">Start Sprint</span>
+              </button>
+              <button id="timerResetBtn" class="px-3 py-2.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-slate-300 hover:text-white text-xs font-semibold transition-all" title="Reset to 50:00">
+                ↺ Reset
+              </button>
+              <button id="quickEndBtn" class="px-3 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold transition-all" title="Fast forward 10 seconds for demo testing">
+                ⏩ 10s Demo
+              </button>
+            </div>
+          </div>
+
+          <!-- Peer Review Quick Trigger -->
+          <div>
+            <button id="openReviewModalBtn" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent-600 to-teal-500 text-white font-bold text-xs shadow-lg shadow-accent-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+              <span>⭐ Session Review & Accountability</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Timer Progress Line -->
+        <div class="w-full bg-surface-900/80 h-1.5 rounded-full mt-4 overflow-hidden">
+          <div id="timerProgressBar" class="bg-gradient-to-r from-brand-500 to-accent-400 h-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- 4-Person Squad Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">
+            Matched 4-Person Squad (Lead + Top 3 Ranked Peers)
+          </h3>
+          <span class="text-xs text-brand-400">Sorted by algorithm match %</span>
+        </div>
+
+        <div id="squadGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Cards rendered by app.js -->
+        </div>
+      </div>
+
+      <!-- Squad Messaging & Direct Chat Hub -->
+      <div id="squadChatSection" class="bg-surface-800/90 border border-brand-500/30 rounded-2xl shadow-xl backdrop-blur-md overflow-hidden transition-all duration-300">
+        
+        <!-- Chat Header -->
+        <div class="p-5 bg-gradient-to-r from-surface-800 via-surface-800 to-indigo-950/40 border-b border-surface-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center text-xl">
+              💬
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-white">Squad Messaging & Coordination Hub</h3>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  4 Members Active
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">Collaborate with your matched study squad, plan study hours, and message peers 1-on-1.</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-mono" id="chatChannelStatus">Channel: #squad-lounge</span>
+          </div>
+        </div>
+
+        <!-- Channel / Direct Message Tabs -->
+        <div class="px-5 pt-3 pb-0 bg-surface-900/60 border-b border-surface-700/80 flex items-center gap-2 overflow-x-auto" id="chatTabsContainer">
+          <button type="button" class="chat-tab-btn active px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2" data-channel="lounge">
+            <span>📢 #squad-lounge (All 4)</span>
+          </button>
+          <!-- Dynamic Peer DM Tabs rendered by JS -->
+        </div>
+
+        <!-- Messages Stream -->
+        <div id="chatMessagesStream" class="p-5 space-y-4 max-h-96 min-h-[260px] overflow-y-auto bg-surface-900/30 scroll-smooth">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Quick Starter Action Chips -->
+        <div class="px-5 py-2.5 bg-surface-900/50 border-t border-surface-700/60 flex items-center gap-2 overflow-x-auto text-[11px]">
+          <span class="text-slate-500 text-[10px] uppercase tracking-wider font-semibold flex-shrink-0">Quick prompts:</span>
+          <button type="button" class="quick-prompt-btn px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-600 text-slate-300 hover:text-white transition-all flex-shrink-0" data-prompt="📅 When should we meet for our first study sprint?">
+            📅 When should we meet?
+          </button>
+          <button type="button" class="quick-prompt-btn px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-600 text-slate-300 hover:text-white transition-all flex-shrink-0" data-prompt="📚 Does anyone have lecture notes or practice questions to share?">
+            📚 Share Study Notes
+          </button>
+          <button type="button" class="quick-prompt-btn px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-600 text-slate-300 hover:text-white transition-all flex-shrink-0" data-prompt="⏱️ Ready to start a 50-minute Pomodoro focus sprint now!">
+            ⏱️ Start 50m Sprint
+          </button>
+          <button type="button" class="quick-prompt-btn px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-600 text-slate-300 hover:text-white transition-all flex-shrink-0" data-prompt="☕ Taking a quick 5-minute break. Back soon!">
+            ☕ Take Break
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="squadChatForm" class="p-4 bg-surface-800/90 border-t border-surface-700 flex items-center gap-3">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Type a message to your squad... (Press Enter to send)" 
+            autocomplete="off"
+            class="flex-1 px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+          />
+          <button 
+            type="submit" 
+            id="chatSendBtn" 
+            class="px-5 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white font-bold text-xs shadow-lg shadow-brand-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5 flex-shrink-0"
+          >
+            <span>Send</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          </button>
+        </form>
+
+      </div>
+
+      <!-- Ranked Breakdown Table for All Candidates -->
+      <div class="bg-surface-800/60 border border-surface-700/70 rounded-2xl p-6">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">All Candidate Match Scores & Points Breakdown</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-surface-900/60 text-slate-400 uppercase font-mono text-[10px] border-b border-surface-700">
+              <tr>
+                <th class="p-3">Rank / Candidate</th>
+                <th class="p-3">Schedule (+40)</th>
+                <th class="p-3">CGPA Sync (+30)</th>
+                <th class="p-3">Skill Swap (+30)</th>
+                <th class="p-3">Total Score</th>
+                <th class="p-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="candidatesTableBody" class="divide-y divide-surface-700/50 font-sans">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- PEER ACCOUNTABILITY MODAL -->
+  <div id="reviewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-surface-800 border border-surface-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-5 animate-scaleUp">
+      
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider">Peer Accountability</div>
+          <h3 class="text-xl font-bold text-white mt-1">Study Session Review</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Rate squad members to update their peer reliability scores.</p>
+        </div>
+        <button onclick="closeReviewModal()" class="text-slate-400 hover:text-white text-lg p-1 rounded-lg hover:bg-surface-700">✕</button>
+      </div>
+
+      <!-- Peer Selector Dropdown -->
+      <div>
+        <label for="reviewPeerSelect" class="block text-xs font-semibold text-slate-300 mb-1.5">Select Squad Member to Review</label>
+        <select id="reviewPeerSelect" class="w-full px-3 py-2.5 bg-surface-900 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <!-- Peer Target Card Summary -->
+      <div id="reviewPeerSummary" class="p-3 bg-surface-900/60 border border-surface-700/60 rounded-xl flex items-center gap-3">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Review Criteria -->
+      <div class="space-y-3 pt-2">
+        <label class="flex items-center gap-3 p-3 rounded-xl bg-surface-900/80 border border-surface-700 cursor-pointer hover:border-brand-500/50 transition-colors">
+          <input type="checkbox" id="reviewPunctual" checked class="w-4 h-4 rounded text-brand-500 bg-surface-800 border-surface-600 focus:ring-brand-500 focus:ring-offset-0" />
+          <div class="text-xs">
+            <span class="font-bold text-white">⏰ Punctual & On Time</span>
+            <p class="text-slate-400">Joined the study call or library desk within 5 minutes of scheduled time.</p>
+          </div>
+        </label>
+
+        <label class="flex items-center gap-3 p-3 rounded-xl bg-surface-900/80 border border-surface-700 cursor-pointer hover:border-brand-500/50 transition-colors">
+          <input type="checkbox" id="reviewFocused" checked class="w-4 h-4 rounded text-brand-500 bg-surface-800 border-surface-600 focus:ring-brand-500 focus:ring-offset-0" />
+          <div class="text-xs">
+            <span class="font-bold text-white">🎯 Focused & Contributed</span>
+            <p class="text-slate-400">Active participation, helped peers, and maintained deep focus sprint.</p>
+          </div>
+        </label>
+
+        <!-- Star Rating -->
+        <div class="p-3 rounded-xl bg-surface-900/80 border border-surface-700">
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs font-bold text-white">⭐ Overall Session Rating</span>
+            <span id="starRatingLabel" class="text-xs font-semibold text-accent-400">5 / 5 Stars</span>
+          </div>
+          <div class="flex items-center gap-2" id="starRatingContainer">
+            <!-- 5 stars generated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-surface-700">
+          Cancel
+        </button>
+        <button type="button" id="submitReviewBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 text-white font-bold text-xs shadow-lg shadow-brand-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all">
+          Submit Review & Update Score
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PEER POOL DIRECTORY MODAL -->
+  <div id="peerPoolModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-surface-800 border border-surface-700 w-full max-w-4xl max-h-[90vh] rounded-2xl p-6 shadow-2xl flex flex-col animate-scaleUp">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-start pb-4 border-b border-surface-700">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider">Campus Database</span>
+            <span id="poolBadgeCount" class="text-[10px] px-2 py-0.5 rounded-full bg-accent-500/20 text-accent-300 border border-accent-500/30 font-mono font-bold">6 Profiles</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-1">Available Candidate Pool</h3>
+          <p class="text-xs text-slate-400 mt-0.5">All student profiles stored in SQLite and available for 4-person study squads.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="poolAddBtn" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold flex items-center gap-1">
+            + Register New Student
+          </button>
+          <button onclick="closePeerPoolModal()" class="text-slate-400 hover:text-white text-lg p-1 rounded-lg hover:bg-surface-700">✕</button>
+        </div>
+      </div>
+
+      <!-- College Filter Tabs -->
+      <div class="flex items-center gap-2 overflow-x-auto py-2.5 border-b border-surface-700/60" id="poolCollegeFilters">
+        <!-- Generated by JS -->
+      </div>
+
+      <!-- Peer Pool Grid (Scrollable) -->
+      <div id="peerPoolGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4 overflow-y-auto max-h-[60vh] pr-1">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-4 border-t border-surface-700 flex justify-between items-center text-xs text-slate-400">
+        <span>Anyone can add their data to become eligible for squad matching.</span>
+        <button onclick="closePeerPoolModal()" class="px-4 py-2 rounded-xl bg-surface-700 hover:bg-surface-600 text-white font-semibold">
+          Close Directory
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REGISTER NEW STUDENT PROFILE MODAL -->
+  <div id="registerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-surface-800 border border-surface-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4 animate-scaleUp">
+      
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-accent-400 uppercase tracking-wider">Candidate Registration</div>
+          <h3 class="text-xl font-bold text-white mt-1">Store Student Profile</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Enter details to store your profile into the SQLite campus database.</p>
+        </div>
+        <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-white text-lg p-1 rounded-lg hover:bg-surface-700">✕</button>
+      </div>
+
+      <form id="directRegisterForm" class="space-y-4">
+        <!-- College Selector -->
+        <div>
+          <label for="regCollege" class="block text-[11px] font-semibold uppercase tracking-wider text-accent-400 mb-1">🏛️ College / University</label>
+          <select id="regCollege" required class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-accent-500 focus:outline-none">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="regName" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Student Name</label>
+            <input type="text" id="regName" required placeholder="e.g. Maya Lin" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-accent-500 focus:outline-none" />
+          </div>
+          <div>
+            <label for="regSection" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Section / Branch</label>
+            <input type="text" id="regSection" required placeholder="e.g. CSE-C, MECH-A" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-accent-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Peak Study Hours</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500">
+              <input type="radio" name="regHours" value="Night Owl" checked class="text-brand-500" />
+              <span class="text-xs text-white">🌙 Night Owl (10PM-4AM)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500">
+              <input type="radio" name="regHours" value="Early Bird" class="text-brand-500" />
+              <span class="text-xs text-white">🌅 Early Bird (6AM-12PM)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Target CGPA -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label for="regCgpaSlider" class="text-[11px] font-semibold uppercase tracking-wider text-slate-300">Target CGPA Goal</label>
+            <span id="regCgpaVal" class="text-xs font-bold text-accent-400 font-mono">8.5</span>
+          </div>
+          <input type="range" id="regCgpaSlider" min="6.0" max="10.0" step="0.1" value="8.5" class="w-full h-1.5 bg-surface-700 rounded-lg appearance-none cursor-pointer accent-accent-500" />
+        </div>
+
+        <!-- Subjects -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="regStrongSubject" class="block text-[11px] font-semibold uppercase tracking-wider text-emerald-400 mb-1">Strong Subject (Teach)</label>
+            <select id="regStrongSubject" required class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+          </div>
+          <div>
+            <label for="regWeakSubject" class="block text-[11px] font-semibold uppercase tracking-wider text-rose-400 mb-1">Weak Subject (Learn)</label>
+            <select id="regWeakSubject" required class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div>
+          <label for="regBio" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Short Bio</label>
+          <input type="text" id="regBio" placeholder="e.g. GATE aspirant, loves algorithms and system architecture" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+        </div>
+
+        <!-- Alert for subject conflict -->
+        <div id="regSubjectError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px]">
+          Strong and weak subjects cannot be the same.
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-surface-700">
+            Cancel
+          </button>
+          <button type="submit" id="regSubmitBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent-600 to-teal-500 text-white font-bold text-xs shadow-lg shadow-accent-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all">
+            Save Profile to SQLite
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-surface-800 bg-surface-900/90 py-6 text-center text-xs text-slate-500">
+    <p>VibeStudy MVP — Algorithmic Complementary Squad Matching for Engineering Undergrads.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
