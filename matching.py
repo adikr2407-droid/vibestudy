@@ -128,11 +128,44 @@ def calculate_compatibility(user_profile, candidate):
 # Alias for backward compatibility
 calculate_match_score = calculate_compatibility
 
-def find_squad(user_profile):
+def assign_pod_roles(squad_members):
     """
-    Ranks candidates against user_profile strictly from the same college
-    and selects top 3 to form a 4-person squad (User + Top 3).
-    Ensures user does not match with themselves.
+    Assigns each squad member a distinct role from:
+    ["concept_lead", "scribe", "time_tracker", "resource_lead"].
+    Honors stated preferences first; conflicts / no_preference are resolved round-robin.
+    """
+    ALL_ROLES = ["concept_lead", "scribe", "time_tracker", "resource_lead"]
+    available_roles = list(ALL_ROLES)
+    assigned = {}
+
+    # Pass 1: Stated preferences (first come / priority)
+    for idx, member in enumerate(squad_members):
+        pref = (member.get("role_preference") or "no_preference").strip().lower()
+        if pref in available_roles:
+            assigned[idx] = pref
+            available_roles.remove(pref)
+
+    # Pass 2: Round-robin assignment for remaining unassigned members
+    for idx, member in enumerate(squad_members):
+        if idx not in assigned:
+            if available_roles:
+                assigned[idx] = available_roles.pop(0)
+            else:
+                assigned[idx] = "resource_lead"
+
+    for idx, member in enumerate(squad_members):
+        member["assigned_role"] = assigned.get(idx, "concept_lead")
+
+    return squad_members
+
+def find_squad(user_profile, sprint_type="48hr_exam_prep"):
+    """
+    Forms a complementary 4-person study squad (User + Top 3 Peers) with:
+    - College scoping (same university required)
+    - Track pre-filtering (honor_roll requiring target_gpa >= 8.5 vs exchange)
+    - Group cohesion pod-so-far greedy mutual compatibility evaluation
+    - Distinct pod role assignment (concept_lead, scribe, time_tracker, resource_lead)
+    - Secondary sort keys (matching_priority, reliability_score)
     """
     conn = get_db()
     cursor = conn.cursor()
@@ -158,29 +191,98 @@ def find_squad(user_profile):
     rows = cursor.fetchall()
     conn.close()
 
-    candidates_scored = []
-    for r in rows:
-        cand_dict = dict(r)
-        score, breakdown, tags = calculate_match_score(user_profile, cand_dict)
-        cand_dict["match_score"] = score
-        cand_dict["breakdown"] = breakdown
-        cand_dict["tags"] = tags
-        candidates_scored.append(cand_dict)
+    raw_candidates = [dict(r) for r in rows]
 
-    # Sort candidates by match_score descending, then reliability_score descending
-    candidates_scored.sort(key=lambda x: (x["match_score"], x["reliability_score"]), reverse=True)
+    # 1. Track Pre-Filtering
+    user_track = (user_profile.get("track") or "exchange").strip().lower()
+    if user_track not in ["exchange", "honor_roll"]:
+        user_track = "exchange"
 
-    # Top 3 candidates form the squad with user
-    top_3 = candidates_scored[:3]
+    eligible_candidates = []
+    for cand in raw_candidates:
+        c_track = (cand.get("track") or "exchange").strip().lower()
+        try:
+            c_gpa = float(cand.get("target_gpa") or cand.get("target_cgpa") or 0.0)
+        except (ValueError, TypeError):
+            c_gpa = 0.0
+
+        if user_track == "honor_roll":
+            # Honor roll only matches students with target_gpa >= 8.5 who also selected honor_roll
+            if c_track == "honor_roll" and c_gpa >= 8.5:
+                eligible_candidates.append(cand)
+        else:
+            # Exchange matches normally
+            eligible_candidates.append(cand)
+
+    # 2. Score individual match against user_profile
+    for cand in eligible_candidates:
+        score, breakdown, tags = calculate_match_score(user_profile, cand)
+        cand["match_score"] = score
+        cand["breakdown"] = breakdown
+        cand["tags"] = tags
+        cand["matching_priority"] = float(cand.get("matching_priority", 1.0))
+        cand["reliability_score"] = float(cand.get("reliability_score", 95.0))
+
+    # 3. Group Cohesion Pod-so-far Greedy Matching
+    # Iteratively select peers that maximize mutual compatibility with the pod formed so far
+    current_pod = [user_profile]
+    remaining = list(eligible_candidates)
+    top_3 = []
+
+    while len(top_3) < 3 and remaining:
+        best_cand = None
+        best_eval = (-1.0, -1.0, -1.0)
+        
+        for cand in remaining:
+            # Cohesion score: average compatibility with all current pod members
+            compat_with_pod = [calculate_match_score(m, cand)[0] for m in current_pod]
+            cohesion_score = sum(compat_with_pod) / len(compat_with_pod)
+            
+            # Secondary sort: matching_priority, reliability_score
+            priority = cand.get("matching_priority", 1.0)
+            reliability = cand.get("reliability_score", 95.0)
+            
+            eval_tuple = (cohesion_score, priority, reliability)
+            if eval_tuple > best_eval:
+                best_eval = eval_tuple
+                best_cand = cand
+                cand["cohesion_score"] = round(cohesion_score, 1)
+
+        if best_cand:
+            top_3.append(best_cand)
+            current_pod.append(best_cand)
+            remaining.remove(best_cand)
+
+    # Sort all candidates by cohesion_score / match_score, matching_priority, reliability_score
+    eligible_candidates.sort(
+        key=lambda x: (x.get("cohesion_score", x.get("match_score", 0)), x.get("matching_priority", 1.0), x.get("reliability_score", 95.0)),
+        reverse=True
+    )
+
+    # 4. Synergy & Group Cohesion Score Calculation
     synergy_score = round(sum(c["match_score"] for c in top_3) / len(top_3), 1) if top_3 else 0.0
+
+    # Calculate overall squad cohesion across all pairwise members in final pod
+    final_pod = [user_profile] + top_3
+    pairwise_scores = []
+    for i in range(len(final_pod)):
+        for j in range(i + 1, len(final_pod)):
+            p_score, _, _ = calculate_match_score(final_pod[i], final_pod[j])
+            pairwise_scores.append(p_score)
+    group_cohesion_score = round(sum(pairwise_scores) / len(pairwise_scores), 1) if pairwise_scores else synergy_score
+
+    # 5. Pod Roles Assignment
+    assign_pod_roles(final_pod)
 
     # Squad highlights
     squad_strengths = set()
-    squad_strengths.add(user_profile.get("strong_subject"))
+    user_str = user_profile.get("teach_subject") or user_profile.get("strong_subject")
+    if user_str:
+        squad_strengths.add(user_str)
     for c in top_3:
-        squad_strengths.add(c["strong_subject"])
-    squad_strengths.discard(None)
-    squad_strengths.discard("")
+        c_str = c.get("teach_subject") or c.get("strong_subject")
+        if c_str:
+            squad_strengths.add(c_str)
 
     # Generate stable squad_id
     import re
@@ -193,9 +295,12 @@ def find_squad(user_profile):
         "squad_id": squad_id,
         "user": user_profile,
         "college": user_college,
-        "total_in_college": len(candidates_scored),
+        "track": user_track,
+        "sprint_type": sprint_type,
+        "total_in_college": len(eligible_candidates),
         "top_candidates": top_3,
-        "all_ranked": candidates_scored,
+        "all_ranked": eligible_candidates,
         "synergy_score": synergy_score,
+        "group_cohesion_score": group_cohesion_score,
         "squad_strengths": list(squad_strengths)
     }

@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   renderStarRating();
   updateStudyHourCardStates();
+  updateTrackCardStates();
   updatePeerPoolCount();
 });
 
@@ -116,6 +117,11 @@ function setupEventListeners() {
   // Study hour cards styling
   document.querySelectorAll(".study-hour-radio").forEach((radio) => {
     radio.addEventListener("change", updateStudyHourCardStates);
+  });
+
+  // Track cards styling
+  document.querySelectorAll(".track-radio").forEach((radio) => {
+    radio.addEventListener("change", updateTrackCardStates);
   });
 
   // Demo Fill Button
@@ -179,6 +185,33 @@ function updateStudyHourCardStates() {
       card.classList.remove("active");
     }
   });
+}
+
+function updateTrackCardStates() {
+  document.querySelectorAll(".track-card").forEach((card) => {
+    const radio = card.querySelector(".track-radio");
+    if (radio && radio.checked) {
+      card.classList.add("active");
+    } else if (card) {
+      card.classList.remove("active");
+    }
+  });
+}
+
+function getRoleDisplay(role) {
+  const r = (role || "no_preference").toLowerCase();
+  switch (r) {
+    case "concept_lead":
+      return { label: "Concept Lead", icon: "🧠", color: "bg-purple-500/20 text-purple-300 border-purple-500/30" };
+    case "scribe":
+      return { label: "Scribe", icon: "✍️", color: "bg-blue-500/20 text-blue-300 border-blue-500/30" };
+    case "time_tracker":
+      return { label: "Time Tracker", icon: "⏱️", color: "bg-amber-500/20 text-amber-300 border-amber-500/30" };
+    case "resource_lead":
+      return { label: "Resource Lead", icon: "📚", color: "bg-teal-500/20 text-teal-300 border-teal-500/30" };
+    default:
+      return { label: "Pod Member", icon: "🤝", color: "bg-surface-700 text-slate-300 border-surface-600" };
+  }
 }
 
 function checkSubjectConflict() {
@@ -322,16 +355,37 @@ function autofillDemo() {
     updateStudyHourCardStates();
   }
 
+  // Select Peer Exchange Track
+  const exchangeRadio = document.querySelector('input[name="sessionTrack"][value="exchange"]');
+  if (exchangeRadio) {
+    exchangeRadio.checked = true;
+    updateTrackCardStates();
+  }
+
+  const rolePrefSelect = document.getElementById("rolePreference");
+  if (rolePrefSelect) rolePrefSelect.value = "concept_lead";
+
+  const sprintTypeSelect = document.getElementById("sprintType");
+  if (sprintTypeSelect) sprintTypeSelect.value = "48hr_exam_prep";
+
   // CGPA: 8.6
   cgpaSlider.value = "8.6";
   cgpaVal.textContent = "8.6";
 
-  // Strong: Data Structures & Algorithms, Weak: Operating Systems
-  strongSubjectSelect.value = "Data Structures & Algorithms";
-  weakSubjectSelect.value = "Operating Systems";
+  // Strong: Data Structures, Weak: Operating Systems
+  if (strongSubjectSelect) {
+    const opt = Array.from(strongSubjectSelect.options).find(o => o.value === "Data Structures" || o.value.includes("Data Structures"));
+    if (opt) strongSubjectSelect.value = opt.value;
+    else if (strongSubjectSelect.options.length > 1) strongSubjectSelect.selectedIndex = 1;
+  }
+  if (weakSubjectSelect) {
+    const opt = Array.from(weakSubjectSelect.options).find(o => o.value === "Operating Systems" || o.value === "Digital Logic" || o.value.includes("Operating"));
+    if (opt) weakSubjectSelect.value = opt.value;
+    else if (weakSubjectSelect.options.length > 2) weakSubjectSelect.selectedIndex = 2;
+  }
   checkSubjectConflict();
 
-  showToast("Demo profile loaded: Aditya Kumar (Apex Institute, Night Owl, 8.6 CGPA)", "success");
+  showToast("Demo profile loaded: Aditya Kumar (Apex Institute, Concept Lead, 48hr Sprint)", "success");
 }
 
 // Form Submit -> Run Matching Engine
@@ -341,17 +395,47 @@ async function handleFormSubmit(e) {
     return;
   }
 
-  const studyHours = document.querySelector('input[name="studyHours"]:checked').value;
+  const studyHoursRadio = document.querySelector('input[name="studyHours"]:checked');
+  const studyHours = studyHoursRadio ? studyHoursRadio.value : "Night Owl";
   const college = userCollegeSelect ? userCollegeSelect.value : "Apex Institute of Technology";
+  const trackRadio = document.querySelector('input[name="sessionTrack"]:checked');
+  const track = trackRadio ? trackRadio.value : "exchange";
+  const rolePrefSelect = document.getElementById("rolePreference");
+  const rolePreference = rolePrefSelect ? rolePrefSelect.value : "no_preference";
+  const sprintTypeSelect = document.getElementById("sprintType");
+  const sprintType = sprintTypeSelect ? sprintTypeSelect.value : "48hr_exam_prep";
+
+  const name = userNameInput ? userNameInput.value.trim() : "";
+  const section = userSectionInput ? userSectionInput.value.trim() : "";
+  const strong = strongSubjectSelect ? strongSubjectSelect.value : "";
+  const weak = weakSubjectSelect ? weakSubjectSelect.value : "";
+
+  if (!name) {
+    showToast("Please enter your name.", "warning");
+    userNameInput?.focus();
+    return;
+  }
+  if (!section) {
+    showToast("Please enter your section / branch.", "warning");
+    userSectionInput?.focus();
+    return;
+  }
+  if (!strong || !weak) {
+    showToast("Please select both a strong and a weak subject.", "warning");
+    return;
+  }
 
   const payload = {
-    name: userNameInput.value.trim(),
+    name: name,
     college: college,
-    section: userSectionInput.value.trim(),
+    section: section,
     study_hours: studyHours,
-    target_cgpa: parseFloat(cgpaSlider.value),
-    strong_subject: strongSubjectSelect.value,
-    weak_subject: weakSubjectSelect.value,
+    target_cgpa: parseFloat(cgpaSlider.value) || 8.5,
+    strong_subject: strong,
+    weak_subject: weak,
+    track: track,
+    role_preference: rolePreference,
+    sprint_type: sprintType,
     bio: userBioInput ? userBioInput.value.trim() : "",
     save_to_pool: saveToPoolCheckbox ? saveToPoolCheckbox.checked : false
   };
@@ -360,6 +444,7 @@ async function handleFormSubmit(e) {
 
   // Show Scanning Animation for UX
   onboardingSection.classList.add("hidden");
+  resultsSection.classList.add("hidden");
   scanningSection.classList.remove("hidden");
 
   try {
@@ -381,20 +466,26 @@ async function handleFormSubmit(e) {
       updatePeerPoolCount();
       showToast("💾 Profile successfully saved to candidate pool!", "success");
     }
-    currentSquad = data.squad;
 
-    // Simulate quick scanning transition
+    // Smooth scanning transition
     setTimeout(() => {
-      scanningSection.classList.add("hidden");
-      renderSquadResults(currentSquad, data.initial_messages);
-      resultsSection.classList.remove("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 900);
+      try {
+        renderSquadResults(currentSquad, data.initial_messages);
+        scanningSection.classList.add("hidden");
+        resultsSection.classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (renderErr) {
+        console.error("Error rendering squad results:", renderErr);
+        scanningSection.classList.add("hidden");
+        onboardingSection.classList.remove("hidden");
+        showToast("Display error rendering squad: " + renderErr.message, "error");
+      }
+    }, 600);
 
   } catch (err) {
     scanningSection.classList.add("hidden");
     onboardingSection.classList.remove("hidden");
-    alert("Error finding squad: " + err.message);
+    showToast("Error finding squad: " + err.message, "error");
   }
 }
 
@@ -403,39 +494,93 @@ function renderSquadResults(squad, initialMessages = null) {
   const user = squad.user;
   const topPeers = squad.top_candidates || [];
   const synergy = squad.synergy_score || 0;
+  const cohesion = squad.group_cohesion_score || 0;
 
   // Synergy Score Header
   document.getElementById("synergyScoreVal").textContent = `${synergy}%`;
   const synergyCircle = document.getElementById("synergyCircle");
   synergyCircle.setAttribute("stroke-dasharray", `${Math.round(synergy)}, 100`);
 
+  // Pod Cohesion Score
+  const cohesionVal = document.getElementById("cohesionScoreVal");
+  if (cohesionVal) cohesionVal.textContent = `${cohesion}%`;
+  const cohesionCircle = document.getElementById("cohesionCircle");
+  if (cohesionCircle) cohesionCircle.setAttribute("stroke-dasharray", `${Math.round(cohesion)}, 100`);
+
   // Squad College Badge
   if (squadCollegeBadge) {
     squadCollegeBadge.textContent = squad.college || user.college || "Same Campus";
   }
 
+  // Squad Track & Sprint Badges
+  const squadTrackBadge = document.getElementById("squadTrackBadge");
+  if (squadTrackBadge) {
+    if (squad.track === "honor_roll") {
+      squadTrackBadge.className = "px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 font-mono";
+      squadTrackBadge.textContent = "🏆 Honor-Roll Sprint";
+    } else {
+      squadTrackBadge.className = "px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30 font-mono";
+      squadTrackBadge.textContent = "🔄 Peer Exchange";
+    }
+  }
+
+  const squadSprintBadge = document.getElementById("squadSprintBadge");
+  if (squadSprintBadge) {
+    if (squad.sprint_type === "weekly_lab") {
+      squadSprintBadge.className = "px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30 font-mono";
+      squadSprintBadge.textContent = "📅 Weekly Lab Cadence";
+    } else {
+      squadSprintBadge.className = "px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 font-mono";
+      squadSprintBadge.textContent = "⚡ 48hr Exam Prep";
+    }
+  }
+
+  // Live Credits & Priority indicators
+  const userCreditsVal = document.getElementById("userCreditsDisplay");
+  if (userCreditsVal) userCreditsVal.textContent = user.study_credits ?? 50;
+  const userPriorityVal = document.getElementById("userPriorityDisplay");
+  if (userPriorityVal) userPriorityVal.textContent = `${user.matching_priority ?? 1.0}x`;
+
   // Squad Strengths Pills
   const strengthContainer = document.getElementById("squadStrengthPills");
-  strengthContainer.innerHTML = '<span class="text-slate-500 mr-1">Covered Topics:</span>' +
-    squad.squad_strengths.map(s => 
-      `<span class="px-2 py-0.5 rounded-md bg-surface-900 border border-surface-700 text-brand-300 font-medium">${s}</span>`
-    ).join(" ");
+  if (strengthContainer) {
+    const strengths = squad.squad_strengths || [];
+    strengthContainer.innerHTML = '<span class="text-slate-500 mr-1">Covered Topics:</span>' +
+      strengths.map(s => 
+        `<span class="px-2 py-0.5 rounded-md bg-surface-900 border border-surface-700 text-brand-300 font-medium">${s}</span>`
+      ).join(" ");
+  }
 
   // Render 4-Person Squad Grid
   const grid = document.getElementById("squadGrid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   // 1. User Card (Lead)
+  // 1. User Card (Lead)
+  const userRole = getRoleDisplay(user.assigned_role);
+  const isUserMentor = (user.is_mentor == 1 || user.verified_mentor == 1 || (user.sessions_taught >= 15));
+  const userMentorBadge = isUserMentor 
+    ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-extrabold bg-gradient-to-r from-amber-500/25 to-yellow-500/20 text-amber-300 border-amber-400/60 shadow-sm shadow-amber-500/20">👑 Verified Mentor</span>` 
+    : "";
+  const userBorderClasses = isUserMentor ? "border-amber-400/80 shadow-lg shadow-amber-500/20" : "border-2";
+
   const userCard = document.createElement("div");
-  userCard.className = "squad-card-lead border-2 rounded-2xl p-5 shadow-xl flex flex-col justify-between relative overflow-hidden";
+  userCard.className = `squad-card-lead ${userBorderClasses} rounded-2xl p-5 shadow-xl flex flex-col justify-between relative overflow-hidden transition-all`;
   userCard.innerHTML = `
     <div>
-      <div class="flex items-center justify-between mb-3">
-        <span class="px-2.5 py-1 rounded-full bg-brand-500/25 border border-brand-500/40 text-brand-300 text-[11px] font-extrabold uppercase tracking-wide">
-          👑 Squad Lead (You)
-        </span>
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-1">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="px-2.5 py-1 rounded-full bg-brand-500/25 border border-brand-500/40 text-brand-300 text-[11px] font-extrabold uppercase tracking-wide">
+            👑 Squad Lead (You)
+          </span>
+          <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${userRole.color}">
+            ${userRole.icon} ${userRole.label}
+          </span>
+        </div>
         <span class="text-xs font-mono text-slate-400 font-semibold">${user.section}</span>
       </div>
+      ${userMentorBadge ? `<div class="mb-3">${userMentorBadge}</div>` : ''}
 
       <div class="text-[11px] text-accent-400 font-semibold mb-3 flex items-center gap-1.5">
         <span>🏛️</span>
@@ -445,14 +590,31 @@ function renderSquadResults(squad, initialMessages = null) {
       <div class="flex items-center space-x-3 mb-4">
         <img src="${user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user.name}" class="w-14 h-14 rounded-2xl bg-surface-900 border border-brand-500/30 p-1" alt="Avatar" />
         <div>
-          <h4 class="text-lg font-bold text-white leading-snug">${user.name}</h4>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <h4 class="text-lg font-bold text-white leading-snug">${user.name}</h4>
+            ${isUserMentor ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-extrabold bg-gradient-to-r from-amber-500/25 to-yellow-500/20 text-amber-300 border-amber-400/60 shadow-sm shadow-amber-500/20">👑 Verified Mentor</span>` : ''}
+          </div>
+          ${isUserMentor ? `<div class="text-[11px] font-semibold text-amber-400/90 flex items-center gap-1 mt-0.5"><span>⚡</span><span>15+ Verified Sprints Led</span></div>` : ''}
           <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
             <span>${user.study_hours === 'Night Owl' ? '🌙 Night Owl' : '🌅 Early Bird'}</span>
             <span>•</span>
-            <span class="text-accent-400 font-bold">🎯 ${user.target_cgpa.toFixed(1)} CGPA</span>
+            <span class="text-accent-400 font-bold">🎯 ${user.target_cgpa ? user.target_cgpa.toFixed(1) : '9.0'} CGPA</span>
           </div>
         </div>
       </div>
+
+      ${isUserMentor && user.id ? `
+      <div class="mb-3 p-2 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-400/30 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 text-xs text-amber-300 font-semibold">
+          <span>👑</span>
+          <span>15+ Verified Sprints Led</span>
+        </div>
+        <a href="/certificate/${user.id}" target="_blank" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-sm transition-all flex items-center gap-1 cursor-pointer">
+          <span>📜</span>
+          <span>View Certificate</span>
+        </a>
+      </div>
+      ` : ''}
 
       <!-- Skills -->
       <div class="space-y-2 mt-4 text-xs">
@@ -468,20 +630,41 @@ function renderSquadResults(squad, initialMessages = null) {
     </div>
 
     <div class="mt-5 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs text-slate-400">
-      <span>Reliability</span>
+      <span>Credits: <strong class="text-emerald-400">${user.study_credits ?? 50}</strong></span>
       <span class="font-bold text-emerald-400">100% (Session Host)</span>
     </div>
   `;
   grid.appendChild(userCard);
 
   // 2. Top 3 Matched Peers
+  if (topPeers.length === 0) {
+    const emptyNotice = document.createElement("div");
+    emptyNotice.className = "col-span-full md:col-span-3 p-6 rounded-2xl bg-surface-800/80 border border-surface-700 text-center flex flex-col items-center justify-center";
+    emptyNotice.innerHTML = `
+      <span class="text-3xl mb-2">🔍</span>
+      <h4 class="text-base font-bold text-white mb-1">No Matching Peers in ${user.college || 'Selected Campus'}</h4>
+      <p class="text-xs text-slate-400 max-w-sm mb-3">No peers matched the current study track and criteria. Try switching tracks or registering more candidates.</p>
+    `;
+    grid.appendChild(emptyNotice);
+  }
+
   topPeers.forEach((peer, idx) => {
+    const isPeerMentor = (peer.is_mentor == 1 || peer.verified_mentor == 1 || (peer.sessions_taught >= 15));
+    const cardBorderClasses = isPeerMentor
+      ? "border-amber-400/80 shadow-lg shadow-amber-500/20"
+      : "border border-surface-700/80";
+
     const card = document.createElement("div");
-    card.className = "squad-card-peer border rounded-2xl p-5 shadow-lg flex flex-col justify-between relative group";
+    card.className = `squad-card-peer rounded-2xl p-5 shadow-lg flex flex-col justify-between relative group transition-all ${cardBorderClasses}`;
     card.id = `peer-card-${peer.id}`;
 
+    const peerRole = getRoleDisplay(peer.assigned_role);
+    const peerMentorBadge = isPeerMentor 
+      ? `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-extrabold bg-gradient-to-r from-amber-500/25 to-yellow-500/20 text-amber-300 border-amber-400/60 shadow-sm shadow-amber-500/20">👑 Verified Mentor</span>` 
+      : "";
+
     // Generate Tag Badges
-    const tagsHtml = peer.tags.map(t => {
+    const tagsHtml = (peer.tags || []).map(t => {
       let bg = "bg-surface-800 text-slate-300 border-surface-700";
       if (t.type === "college") bg = "bg-accent-500/15 text-accent-300 border-accent-500/30 font-semibold";
       else if (t.type.includes("perfect")) bg = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
@@ -495,12 +678,18 @@ function renderSquadResults(squad, initialMessages = null) {
     card.innerHTML = `
       <div>
         <!-- Card Top Bar -->
-        <div class="flex items-center justify-between mb-2">
-          <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-accent-500 to-teal-400 text-slate-950 font-black text-xs shadow-sm">
-            ${peer.match_score}% MATCH
-          </span>
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-accent-500 to-teal-400 text-slate-950 font-black text-xs shadow-sm">
+              ${peer.match_score}% MATCH
+            </span>
+            <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${peerRole.color}">
+              ${peerRole.icon} ${peerRole.label}
+            </span>
+          </div>
           <span class="text-xs font-mono text-slate-400 font-semibold">${peer.section}</span>
         </div>
+        ${peerMentorBadge ? `<div class="mb-2">${peerMentorBadge}</div>` : ''}
 
         <div class="text-[11px] text-accent-400 font-semibold mb-3 flex items-center gap-1.5">
           <span>🏛️</span>
@@ -511,7 +700,11 @@ function renderSquadResults(squad, initialMessages = null) {
         <div class="flex items-center space-x-3 mb-3">
           <img src="${peer.avatar}" class="w-14 h-14 rounded-2xl bg-surface-900 border border-surface-700 p-1" alt="Avatar" />
           <div>
-            <h4 class="text-base font-bold text-white leading-snug">${peer.name}</h4>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h4 class="text-base font-bold text-white leading-snug">${peer.name}</h4>
+              ${isPeerMentor ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-extrabold bg-gradient-to-r from-amber-500/25 to-yellow-500/20 text-amber-300 border-amber-400/60 shadow-sm shadow-amber-500/20">👑 Verified Mentor</span>` : ''}
+            </div>
+            ${isPeerMentor ? `<div class="text-[11px] font-semibold text-amber-400/90 flex items-center gap-1 mt-0.5"><span>⚡</span><span>15+ Verified Sprints Led</span></div>` : ''}
             <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
               <span>${peer.study_hours === 'Night Owl' ? '🌙 Night Owl' : '🌅 Early Bird'}</span>
               <span>•</span>
@@ -520,10 +713,24 @@ function renderSquadResults(squad, initialMessages = null) {
           </div>
         </div>
 
+        ${isPeerMentor ? `
+        <div class="mb-3 p-2 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-400/30 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-xs text-amber-300 font-semibold">
+            <span>👑</span>
+            <span>15+ Verified Sprints Led</span>
+          </div>
+          <a href="/certificate/${peer.id}" target="_blank" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-sm transition-all flex items-center gap-1 cursor-pointer">
+            <span>📜</span>
+            <span>View Certificate</span>
+          </a>
+        </div>
+        ` : ''}
+
         <p class="text-[11px] text-slate-400 italic line-clamp-2 mb-3">"${peer.bio || 'Motivated engineering student.'}"</p>
 
         <!-- Reason Tags -->
         <div class="flex flex-wrap gap-1.5 mb-4">
+          ${peer.cohesion_score !== undefined ? `<span class="inline-block text-[10px] px-2 py-0.5 rounded-md border font-semibold bg-emerald-500/20 text-emerald-300 border-emerald-500/40">🤝 Cohesion: ${peer.cohesion_score}%</span>` : ''}
           ${tagsHtml}
         </div>
 
@@ -541,12 +748,18 @@ function renderSquadResults(squad, initialMessages = null) {
       </div>
 
       <!-- Card Footer with Reliability & Review CTA & Chat -->
-      <div class="mt-4 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs gap-1.5">
+      <div class="mt-4 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs gap-1.5 flex-wrap">
         <div class="flex items-center gap-1">
           <span class="text-amber-400">★</span>
           <span class="font-bold text-slate-200 peer-reliability-score" id="score-${peer.id}">${peer.reliability_score}%</span>
         </div>
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          ${isPeerMentor ? `
+            <a href="/certificate/${peer.id}" target="_blank" class="text-[11px] px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white border border-amber-400/40 font-semibold transition-all flex items-center gap-1" title="View Verified Mentor Certificate">
+              <span>📜</span>
+              <span>View Certificate</span>
+            </a>
+          ` : ''}
           <button onclick="switchToChatChannel('dm_${peer.id}')" class="text-[11px] px-2 py-1 rounded-md bg-brand-500/20 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/30 font-semibold transition-all flex items-center gap-1">
             <span>💬</span>
             <span>Chat</span>
@@ -570,31 +783,47 @@ function renderSquadResults(squad, initialMessages = null) {
 // Render candidates breakdown table
 function renderCandidatesTable(candidates) {
   const tbody = document.getElementById("candidatesTableBody");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
-  candidates.forEach((cand, idx) => {
+  (candidates || []).forEach((cand, idx) => {
     const isTop3 = idx < 3;
     const tr = document.createElement("tr");
     tr.className = isTop3 ? "bg-brand-500/10 hover:bg-brand-500/15" : "hover:bg-surface-850";
+    const roleInfo = getRoleDisplay(cand.assigned_role || cand.role_preference);
+    const isMentor = cand.is_mentor == 1 || cand.verified_mentor == 1 || (cand.sessions_taught >= 15);
+    const mentorTag = isMentor ? `<a href="/certificate/${cand.id}" target="_blank" class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold ml-1 hover:bg-amber-500/30 transition-all inline-flex items-center gap-0.5" title="View Verified Mentor Certificate"><span>👑</span><span>Mentor</span></a>` : '';
+    const trackTag = cand.track === 'honor_roll' ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold ml-1">🏆 HR</span>' : '<span class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold ml-1">🔄 Ex</span>';
     
+    const schedPts = cand.breakdown ? cand.breakdown.schedule_pts : 0;
+    const cgpaPts = cand.breakdown ? cand.breakdown.cgpa_pts : 0;
+    const skillPts = cand.breakdown ? cand.breakdown.skill_pts : 0;
+
     tr.innerHTML = `
       <td class="p-3 font-medium flex items-center gap-2 text-white">
         <span class="w-5 h-5 rounded-full ${isTop3 ? 'bg-brand-500 text-white font-bold' : 'bg-surface-700 text-slate-400'} inline-flex items-center justify-center text-[10px]">
           ${idx + 1}
         </span>
-        <span class="font-semibold">${cand.name}</span>
-        <span class="text-slate-400 text-[10px]">(${cand.section})</span>
+        <div class="flex flex-col">
+          <div class="flex items-center">
+            <span class="font-semibold">${cand.name}</span>
+            ${mentorTag}
+            ${trackTag}
+          </div>
+          <span class="text-slate-400 text-[10px]">${cand.section} • ${roleInfo.icon} ${roleInfo.label}</span>
+        </div>
       </td>
       <td class="p-3 font-mono text-slate-300">
-        +${cand.breakdown.schedule_pts} pts
+        +${schedPts} pts
         <span class="text-[10px] text-slate-400">(${cand.study_hours})</span>
       </td>
       <td class="p-3 font-mono text-slate-300">
-        +${cand.breakdown.cgpa_pts} pts
+        +${cgpaPts} pts
         <span class="text-[10px] text-slate-400">(Goal: ${cand.target_cgpa})</span>
       </td>
       <td class="p-3 font-mono text-slate-300">
-        +${cand.breakdown.skill_pts} pts
+        +${skillPts} pts
+        ${cand.cohesion_score !== undefined ? `<div class="text-[10px] text-emerald-400">Cohesion: ${cand.cohesion_score}%</div>` : ''}
       </td>
       <td class="p-3 font-mono font-bold text-accent-400 text-sm">
         ${cand.match_score}%
@@ -616,6 +845,47 @@ function resetToOnboarding() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+// Session Checkin API (Credits & Priority)
+async function checkinSession(action) {
+  const studentId = userProfile?.id || currentSquad?.user?.id || 0;
+  try {
+    const res = await fetch("/api/session/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id: studentId, action: action })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      const creditsDisplay = document.getElementById("userCreditsDisplay");
+      if (creditsDisplay && data.study_credits !== undefined) {
+        creditsDisplay.textContent = data.study_credits;
+      }
+      const priorityDisplay = document.getElementById("userPriorityDisplay");
+      if (priorityDisplay && data.matching_priority !== undefined) {
+        priorityDisplay.textContent = `${data.matching_priority}x`;
+      }
+      const depositStatus = document.getElementById("creditsDepositStatus");
+      if (depositStatus) {
+        if (action === "start") {
+          depositStatus.textContent = "🔒 10 Credits Deposited (In-Sprint)";
+          depositStatus.className = "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 font-mono";
+        } else if (action === "complete") {
+          depositStatus.textContent = "🎉 +5 Bonus Credits Awarded!";
+          depositStatus.className = "text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono";
+        } else if (action === "noshow") {
+          depositStatus.textContent = "⚠️ Deposit Forfeited (No-Show)";
+          depositStatus.className = "text-[11px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono";
+        }
+      }
+      if (action !== "start") {
+        showToast(data.message, action === "complete" ? "success" : "warning");
+      }
+    }
+  } catch (err) {
+    console.warn("Session checkin notification:", err);
+  }
+}
+
 // Pomodoro Timer Logic
 function toggleTimer() {
   if (isPomodoroRunning) {
@@ -634,6 +904,9 @@ function startTimer() {
   timerPill.textContent = "Focus Sprint Active";
   timerPill.classList.remove("bg-emerald-500/20", "text-emerald-300", "border-emerald-500/30");
   timerPill.classList.add("bg-amber-500/20", "text-amber-300", "border-amber-500/30", "animate-pulse");
+
+  // Lock 10-credit deposit on session start
+  checkinSession("start");
 
   pomodoroInterval = setInterval(() => {
     if (pomodoroSeconds > 0) {
@@ -683,6 +956,9 @@ function finishTimer() {
   timerProgressBar.style.width = "100%";
   showToast("⏰ 50m Focus Sprint Complete! Log your peer review now.", "success");
   
+  // Refund deposit + award 5 bonus credits
+  checkinSession("complete");
+
   // Post system announcement to Squad Chat
   if (currentSquadId) {
     fetch(`/api/squad/${encodeURIComponent(currentSquadId)}/messages`, {
@@ -834,6 +1110,8 @@ async function submitReview() {
     if (peer) {
       peer.reliability_score = data.new_score;
       peer.review_count = data.review_count;
+      peer.teaching_sessions_completed = data.teaching_sessions_completed;
+      peer.verified_mentor = data.verified_mentor;
       
       // Update DOM element
       const scoreBadge = document.getElementById(`score-${peer.id}`);
@@ -845,7 +1123,11 @@ async function submitReview() {
     }
 
     closeReviewModal();
-    showToast(`🎉 Review saved! ${data.message} (Score: ${data.old_score}% → ${data.new_score}%)`, "success");
+    let toastMsg = `🎉 Review saved! ${data.message} (Score: ${data.old_score}% → ${data.new_score}%)`;
+    if (data.verified_mentor === 1) {
+      toastMsg += " 🎖️ Verified Mentor Badge unlocked!";
+    }
+    showToast(toastMsg, "success");
 
   } catch (err) {
     alert("Error submitting review: " + err.message);
@@ -963,15 +1245,37 @@ async function fetchAndRenderPeerPool(college = currentPoolCollegeFilter) {
 
     candidates.forEach((cand) => {
       const card = document.createElement("div");
-      card.className = "p-4 rounded-xl bg-surface-900/90 border border-surface-700/80 shadow-md flex flex-col justify-between hover:border-brand-500/50 transition-all";
+      const candRole = getRoleDisplay(cand.role_preference);
+      const isMentor = cand.is_mentor == 1 || cand.verified_mentor == 1 || (cand.sessions_taught >= 15);
+      const isHonorRoll = cand.track === "honor_roll";
+      const cardBorderClasses = isMentor ? "border-amber-400/80 shadow-lg shadow-amber-500/20" : "border-surface-700/80";
+      card.className = `p-4 rounded-xl bg-surface-900/90 border ${cardBorderClasses} shadow-md flex flex-col justify-between hover:border-brand-500/50 transition-all`;
+
       card.innerHTML = `
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${cand.study_hours === 'Night Owl' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
-              ${cand.study_hours === 'Night Owl' ? '🌙 Night Owl' : '🌅 Early Bird'}
-            </span>
+          <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${cand.study_hours === 'Night Owl' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
+                ${cand.study_hours === 'Night Owl' ? '🌙 Night Owl' : '🌅 Early Bird'}
+              </span>
+              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isHonorRoll ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'}">
+                ${isHonorRoll ? '🏆 HR' : '🔄 Ex'}
+              </span>
+            </div>
             <span class="text-xs font-mono text-slate-400 font-bold">${cand.section}</span>
           </div>
+
+          ${isMentor ? `
+          <div class="mb-2 flex items-center justify-between gap-1">
+            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-1">
+              <span>👑</span>
+              <span>Verified Mentor</span>
+            </span>
+            <a href="/certificate/${cand.id}" target="_blank" class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white border border-amber-400/40 transition-all flex items-center gap-0.5 cursor-pointer">
+              <span>📜 Certificate</span>
+            </a>
+          </div>
+          ` : ''}
 
           <div class="text-[11px] text-accent-400 font-semibold mb-2 flex items-center gap-1">
             <span>🏛️</span>
@@ -981,8 +1285,12 @@ async function fetchAndRenderPeerPool(college = currentPoolCollegeFilter) {
           <div class="flex items-center gap-2.5 mb-2">
             <img src="${cand.avatar}" class="w-10 h-10 rounded-xl bg-surface-800 border border-surface-700 p-0.5" alt="Avatar" />
             <div>
-              <h5 class="text-sm font-bold text-white leading-tight">${cand.name}</h5>
-              <div class="text-[11px] text-accent-400 font-mono font-semibold">🎯 Target: ${cand.target_cgpa} CGPA</div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <h5 class="text-sm font-bold text-white leading-tight">${cand.name}</h5>
+              </div>
+              ${isMentor ? `<div class="text-[10px] text-amber-400 font-semibold mt-0.5 flex items-center gap-1"><span>⚡</span><span>15+ Verified Sprints Led</span></div>` : ''}
+              <div class="text-[11px] text-accent-400 font-mono font-semibold mt-0.5">🎯 Target: ${cand.target_cgpa} CGPA</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">${candRole.icon} ${candRole.label}</div>
             </div>
           </div>
 
@@ -1002,7 +1310,10 @@ async function fetchAndRenderPeerPool(college = currentPoolCollegeFilter) {
 
         <div class="mt-3 pt-2 border-t border-surface-800 flex items-center justify-between text-[11px] text-slate-400">
           <span class="text-amber-400 font-mono">★ ${cand.reliability_score}%</span>
-          <span class="text-[10px] text-slate-500">${cand.review_count} session reviews</span>
+          <div class="flex items-center gap-1.5">
+            ${isMentor ? `<a href="/certificate/${cand.id}" target="_blank" class="text-[10px] text-amber-400 hover:text-amber-300 font-semibold underline">Certificate</a>` : ''}
+            <span class="text-[10px] text-slate-500">${cand.review_count} reviews</span>
+          </div>
         </div>
       `;
       peerPoolGrid.appendChild(card);
@@ -1023,6 +1334,8 @@ async function handleDirectRegisterSubmit(e) {
 
   const studyHours = document.querySelector('input[name="regHours"]:checked').value;
   const college = regCollegeSelect ? regCollegeSelect.value : "Apex Institute of Technology";
+  const regTrack = document.getElementById("regTrack") ? document.getElementById("regTrack").value : "exchange";
+  const regRolePref = document.getElementById("regRolePreference") ? document.getElementById("regRolePreference").value : "no_preference";
 
   const payload = {
     name: regNameInput.value.trim(),
@@ -1032,6 +1345,8 @@ async function handleDirectRegisterSubmit(e) {
     target_cgpa: parseFloat(regCgpaSlider.value),
     strong_subject: regStrongSubject.value,
     weak_subject: regWeakSubject.value,
+    track: regTrack,
+    role_preference: regRolePref,
     bio: regBioInput.value.trim() || "Ready for deep focus study sprints."
   };
 

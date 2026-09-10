@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, render_template, send_from_directory
-from database import init_db, get_db, add_student, COLLEGES, get_squad_messages, add_squad_message, init_squad_chat
+from database import init_db, get_db, add_student, COLLEGES, get_squad_messages, add_squad_message, init_squad_chat, save_squad_session, get_squad_session
 from matching import find_squad, calculate_compatibility
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -11,9 +11,11 @@ ENGINEERING_SUBJECTS = [
     "Calculus",
     "Physics",
     "Data Structures",
+    "Data Structures & Algorithms",
     "Operating Systems",
     "Machine Learning & AI",
-    "Database Management Systems"
+    "Database Management Systems",
+    "Computer Networks"
 ]
 
 # Ensure DB is initialized
@@ -71,6 +73,9 @@ def create_student():
     weak_subject = need_subject
     bio = data.get("bio", "Engineering undergraduate student ready for study sprints.").strip()
 
+    track = (data.get("track") or "exchange").strip().lower()
+    role_preference = (data.get("role_preference") or "no_preference").strip().lower()
+
     if not name or not section:
         return jsonify({"error": "Name and Section are required."}), 400
 
@@ -95,7 +100,11 @@ def create_student():
         "reputation_score": 95,
         "reliability_score": 95.0,
         "review_count": 1,
-        "bio": bio
+        "bio": bio,
+        "track": track,
+        "role_preference": role_preference,
+        "study_credits": int(data.get("study_credits", 50)),
+        "matching_priority": float(data.get("matching_priority", 1.0))
     })
 
     return jsonify({
@@ -133,6 +142,9 @@ def match_squad():
 
     save_to_pool = bool(data.get("save_to_pool", False))
     bio = data.get("bio", "Engineering undergraduate student ready for study sprints.").strip()
+    track = (data.get("track") or "exchange").strip().lower()
+    role_preference = (data.get("role_preference") or "no_preference").strip().lower()
+    sprint_type = (data.get("sprint_type") or "48hr_exam_prep").strip().lower()
 
     if not strong_subject or not weak_subject:
         return jsonify({"error": "Please provide both strong and weak subjects."}), 400
@@ -157,7 +169,13 @@ def match_squad():
             "reputation_score": 100,
             "reliability_score": 100.0,
             "review_count": 1,
-            "bio": bio
+            "bio": bio,
+            "track": track,
+            "role_preference": role_preference,
+            "study_credits": 50,
+            "matching_priority": 1.0,
+            "sessions_taught": 0,
+            "is_mentor": 0
         })
         user_id = saved_student["id"]
 
@@ -177,11 +195,20 @@ def match_squad():
         "weak_subject": weak_subject,
         "reputation_score": 100,
         "reliability_score": 100.0,
+        "track": track,
+        "role_preference": role_preference,
         "is_user": True,
-        "saved_to_pool": save_to_pool
+        "saved_to_pool": save_to_pool,
+        "sessions_taught": 0,
+        "is_mentor": 0,
+        "verified_mentor": 0,
+        "teaching_sessions_completed": 0
     }
 
-    squad_result = find_squad(user_profile)
+    squad_result = find_squad(user_profile, sprint_type=sprint_type)
+    session_record = save_squad_session(squad_result["squad_id"], college, sprint_type=sprint_type)
+    squad_result["session"] = session_record
+    
     initial_messages = init_squad_chat(squad_result["squad_id"], user_profile, squad_result["top_candidates"])
     return jsonify({
         "status": "success",
@@ -230,11 +257,24 @@ def submit_review():
         VALUES (?, ?, ?, ?, ?)
     """, (student_id, reviewer_name, punctual, focused, rating))
 
+    # Check mentor teaching session qualification
+    old_teaching = student["sessions_taught"] if "sessions_taught" in student.keys() else (student["teaching_sessions_completed"] if "teaching_sessions_completed" in student.keys() else 0)
+    old_mentor = student["is_mentor"] if "is_mentor" in student.keys() else (student["verified_mentor"] if "verified_mentor" in student.keys() else 0)
+
+    if punctual and focused and rating >= 4:
+        new_teaching = (old_teaching or 0) + 1
+        new_mentor = 1 if new_teaching >= 15 else (old_mentor or 0)
+    else:
+        new_teaching = old_teaching or 0
+        new_mentor = old_mentor or 0
+
     cursor.execute("""
         UPDATE students
-        SET reliability_score = ?, reputation_score = ?, review_count = ?
+        SET reliability_score = ?, reputation_score = ?, review_count = ?,
+            teaching_sessions_completed = ?, verified_mentor = ?,
+            sessions_taught = ?, is_mentor = ?
         WHERE id = ?
-    """, (new_score, int(new_score), new_count, student_id))
+    """, (new_score, int(new_score), new_count, new_teaching, new_mentor, new_teaching, new_mentor, student_id))
     
     conn.commit()
     conn.close()
@@ -245,7 +285,122 @@ def submit_review():
         "student_id": student_id,
         "old_score": old_score,
         "new_score": new_score,
-        "review_count": new_count
+        "review_count": new_count,
+        "teaching_sessions_completed": new_teaching,
+        "verified_mentor": new_mentor,
+        "sessions_taught": new_teaching,
+        "is_mentor": new_mentor
+    })
+
+@app.route("/api/session/checkin", methods=["POST"])
+def session_checkin():
+    data = request.get_json() or {}
+    student_id = data.get("student_id")
+    action = (data.get("action") or "").strip().lower()
+    squad_id = data.get("squad_id", "")
+
+    if not student_id or action not in ["start", "complete", "noshow"]:
+        return jsonify({"error": "Valid student_id and action ('start', 'complete', 'noshow') are required."}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id = ?", (student_id,))
+    student = cursor.fetchone()
+
+    if not student:
+        conn.close()
+        return jsonify({"error": "Student not found."}), 404
+
+    current_credits = student["study_credits"] if "study_credits" in student.keys() else 50
+    priority = student["matching_priority"] if "matching_priority" in student.keys() else 1.0
+    review_count = student["review_count"] if "review_count" in student.keys() else 1
+
+    DEPOSIT = 10
+    BONUS = 5
+
+    if action == "start":
+        if current_credits < DEPOSIT:
+            conn.close()
+            return jsonify({
+                "status": "error",
+                "error": f"Insufficient study credits. Need {DEPOSIT} credits to lock sprint deposit, but currently have {current_credits}."
+            }), 400
+        new_credits = current_credits - DEPOSIT
+        cursor.execute("UPDATE students SET study_credits = ? WHERE id = ?", (new_credits, student_id))
+        conn.commit()
+        conn.close()
+        return jsonify({
+            "status": "success",
+            "action": "start",
+            "deposit_locked": DEPOSIT,
+            "study_credits": new_credits,
+            "matching_priority": priority,
+            "message": f"Deposit of {DEPOSIT} credits locked for sprint. Remaining balance: {new_credits} credits."
+        })
+
+    elif action == "complete":
+        refund_and_bonus = DEPOSIT + BONUS
+        new_credits = current_credits + refund_and_bonus
+        new_priority = round(min(1.5, priority + 0.05), 2)
+        cursor.execute("UPDATE students SET study_credits = ?, matching_priority = ? WHERE id = ?", (new_credits, new_priority, student_id))
+        conn.commit()
+        conn.close()
+        return jsonify({
+            "status": "success",
+            "action": "complete",
+            "refunded": DEPOSIT,
+            "bonus": BONUS,
+            "net_gain": BONUS,
+            "study_credits": new_credits,
+            "matching_priority": new_priority,
+            "message": f"Sprint completed on time! Refunded {DEPOSIT} deposit + {BONUS} bonus credits. New balance: {new_credits} credits."
+        })
+
+    elif action == "noshow":
+        # First-time users (review_count == 0) get one grace session
+        is_first_time = (review_count == 0)
+        if is_first_time:
+            new_credits = current_credits + DEPOSIT
+            new_priority = priority
+            cursor.execute("UPDATE students SET study_credits = ? WHERE id = ?", (new_credits, student_id))
+            conn.commit()
+            conn.close()
+            return jsonify({
+                "status": "success",
+                "action": "noshow",
+                "grace_session": True,
+                "study_credits": new_credits,
+                "matching_priority": new_priority,
+                "message": "First-time user grace session applied: deposit restored with no credits forfeited."
+            })
+        else:
+            new_priority = round(max(0.2, priority - 0.15), 2)
+            cursor.execute("UPDATE students SET matching_priority = ? WHERE id = ?", (new_priority, student_id))
+            conn.commit()
+            conn.close()
+            return jsonify({
+                "status": "success",
+                "action": "noshow",
+                "grace_session": False,
+                "deposit_forfeited": DEPOSIT,
+                "study_credits": current_credits,
+                "matching_priority": new_priority,
+                "message": f"Unexcused no-show: {DEPOSIT} credit deposit forfeited. Matching priority reduced to {new_priority}."
+            })
+
+@app.route("/api/squad/<squad_id>", methods=["GET"])
+def get_squad_info(squad_id):
+    session_info = get_squad_session(squad_id)
+    if not session_info:
+        return jsonify({"status": "not_found", "squad_id": squad_id, "is_expired": False}), 404
+    return jsonify({
+        "status": "success",
+        "session": session_info,
+        "session_status": session_info.get("status"),
+        "expired": session_info.get("expired", False),
+        "sprint_type": session_info.get("sprint_type"),
+        "expires_at": session_info.get("expires_at"),
+        "time_remaining": session_info.get("time_remaining")
     })
 
 @app.route("/api/squad/<squad_id>/messages", methods=["GET"])
@@ -330,6 +485,65 @@ def simulate_peer_reply_route(squad_id):
 def reset_database():
     init_db(force_reset=True)
     return jsonify({"status": "success", "message": "Database reset to initial 6 candidates."})
+
+@app.route("/certificate/<int:student_id>")
+def view_certificate(student_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id = ?", (student_id,))
+    student_row = cursor.fetchone()
+    conn.close()
+
+    if not student_row:
+        return render_template(
+            "certificate_denied.html",
+            student=None,
+            sessions_taught=0,
+            needed_sessions=15,
+            remaining_sessions=15,
+            error_title="Student Profile Not Found",
+            error_message=f"No student record found in database with ID #{student_id}."
+        ), 404
+
+    student = dict(student_row)
+    sessions_taught = student.get("sessions_taught")
+    if sessions_taught is None:
+        sessions_taught = student.get("teaching_sessions_completed", 0)
+    sessions_taught = int(sessions_taught or 0)
+
+    raw_mentor = student.get("is_mentor")
+    if raw_mentor is None:
+        raw_mentor = student.get("verified_mentor", 0)
+    is_mentor = int(raw_mentor or 0) == 1
+
+    is_qualified = is_mentor or (sessions_taught >= 15)
+    if not is_qualified:
+        return render_template(
+            "certificate_denied.html",
+            student=student,
+            sessions_taught=sessions_taught,
+            needed_sessions=15,
+            remaining_sessions=max(0, 15 - sessions_taught),
+            error_title="Mentor Certification Pending",
+            error_message=f"{student['name']} has completed {sessions_taught} out of 15 required high-rated peer teaching sprints to achieve Verified Peer Mentor status."
+        ), 403
+
+    import hashlib
+    hash_suffix = hashlib.md5(f"vibestudy-cert-{student_id}-{student['name']}".encode()).hexdigest()[:4].upper()
+    credential_id = f"VIBE-CERT-{student_id:04d}{hash_suffix}"
+    
+    import datetime
+    issue_date = datetime.date.today().strftime("%B %d, %Y")
+    primary_subject = student.get("teach_subject") or student.get("strong_subject") or "Engineering Fundamentals"
+
+    return render_template(
+        "certificate.html",
+        student=student,
+        credential_id=credential_id,
+        issue_date=issue_date,
+        primary_subject=primary_subject,
+        sessions_taught=sessions_taught
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

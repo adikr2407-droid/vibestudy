@@ -143,6 +143,43 @@
             </div>
           </div>
 
+          <!-- Session Track (Exchange vs Honor-Roll) -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">Study Track</label>
+              <span class="text-[10px] text-slate-400 font-mono">TRACK SCOPED</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="relative flex items-center p-3.5 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500/80 transition-all track-card active">
+                <input type="radio" name="sessionTrack" value="exchange" checked class="sr-only track-radio" />
+                <div class="flex items-center space-x-3 w-full">
+                  <span class="text-xl">🔄</span>
+                  <div class="flex-1">
+                    <div class="text-xs font-bold text-white flex items-center justify-between">
+                      <span>Peer Exchange</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300 font-mono">STANDARD</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">Reciprocal skill swap & collaborative study</div>
+                  </div>
+                </div>
+              </label>
+
+              <label class="relative flex items-center p-3.5 rounded-xl border border-surface-600 bg-surface-900/60 cursor-pointer hover:border-brand-500/80 transition-all track-card">
+                <input type="radio" name="sessionTrack" value="honor_roll" class="sr-only track-radio" />
+                <div class="flex items-center space-x-3 w-full">
+                  <span class="text-xl">🏆</span>
+                  <div class="flex-1">
+                    <div class="text-xs font-bold text-white flex items-center justify-between">
+                      <span>Honor-Roll Sprint</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">8.5+ CGPA</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">High-ambition deep dive with top scorers</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <!-- Study Hours Cards -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Peak Study Hours (+40 Points)</label>
@@ -226,6 +263,30 @@
             </div>
           </div>
 
+          <!-- Pod Role Preference & Sprint Type -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="rolePreference" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                🎭 Preferred Pod Role
+              </label>
+              <select id="rolePreference" class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                <option value="no_preference" selected>🤝 No Preference (Round-Robin)</option>
+                <option value="concept_lead">🧠 Concept Lead (Topics & Discussions)</option>
+                <option value="scribe">✍️ Scribe (Notes & Solutions)</option>
+                <option value="time_tracker">⏱️ Time Tracker (Pacing & Sprints)</option>
+              </select>
+            </div>
+            <div>
+              <label for="sprintType" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                ⚡ Micro-Sprint Type
+              </label>
+              <select id="sprintType" class="w-full px-4 py-3 bg-surface-900/90 border border-surface-600 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                <option value="48hr_exam_prep" selected>⚡ 48-Hour Exam Prep</option>
+                <option value="weekly_lab">📅 Weekly Lab Cadence (7 Days)</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Bio & Notes -->
           <div>
             <label for="userBio" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Short Bio / Study Focus (Optional)</label>
@@ -289,7 +350,13 @@
               <span>🏛️</span>
               <span id="squadCollegeBadge">Apex Institute of Technology</span>
             </span>
-            <span class="text-xs text-slate-400">4 Members • Same Campus Verified</span>
+            <span id="squadTrackBadge" class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30 font-mono">
+              🔄 Peer Exchange
+            </span>
+            <span id="squadSprintBadge" class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 font-mono">
+              ⚡ 48hr Exam Prep
+            </span>
+            <span class="text-xs text-slate-400">4 Members • Campus Verified</span>
           </div>
           <h2 class="text-2xl sm:text-3xl font-black text-white">
             Squad <span class="bg-gradient-to-r from-brand-400 to-accent-400 bg-clip-text text-transparent" id="squadName">Apex</span>
@@ -299,18 +366,34 @@
           </p>
         </div>
 
-        <!-- Synergy Score Meter -->
-        <div class="flex items-center gap-6 self-start md:self-auto bg-surface-900/80 border border-surface-700/80 px-6 py-4 rounded-xl">
-          <div class="text-right">
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Squad Synergy</div>
-            <div class="text-3xl font-extrabold text-accent-400 font-mono" id="synergyScoreVal">92.4%</div>
+        <!-- Synergy & Cohesion Score Meters -->
+        <div class="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          <div class="flex items-center gap-3 bg-surface-900/80 border border-surface-700/80 px-4 py-3 rounded-xl">
+            <div class="text-right">
+              <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">User Match</div>
+              <div class="text-2xl font-extrabold text-accent-400 font-mono" id="synergyScoreVal">92.4%</div>
+            </div>
+            <div class="w-11 h-11 rounded-full border-2 border-surface-700 relative flex items-center justify-center">
+              <svg class="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
+                <path class="text-surface-700" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="synergyCircle" class="text-accent-400 transition-all duration-1000" stroke-dasharray="92, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span class="absolute text-[10px] font-bold text-white">★</span>
+            </div>
           </div>
-          <div class="w-14 h-14 rounded-full border-4 border-surface-700 relative flex items-center justify-center">
-            <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
-              <path class="text-surface-700" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path id="synergyCircle" class="text-accent-400 transition-all duration-1000" stroke-dasharray="92, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            </svg>
-            <span class="absolute text-xs font-bold text-white">★</span>
+
+          <div class="flex items-center gap-3 bg-surface-900/80 border border-surface-700/80 px-4 py-3 rounded-xl">
+            <div class="text-right">
+              <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Pod Cohesion</div>
+              <div class="text-2xl font-extrabold text-emerald-400 font-mono" id="cohesionScoreVal">89.1%</div>
+            </div>
+            <div class="w-11 h-11 rounded-full border-2 border-surface-700 relative flex items-center justify-center">
+              <svg class="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
+                <path class="text-surface-700" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="cohesionCircle" class="text-emerald-400 transition-all duration-1000" stroke-dasharray="89, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span class="absolute text-[10px] font-bold text-emerald-400">🤝</span>
+            </div>
           </div>
         </div>
 
@@ -338,6 +421,17 @@
                 </span>
               </div>
               <p class="text-xs text-slate-400">Synchronized 50-minute focus session for your 4-person squad.</p>
+              <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span id="creditsDepositStatus" class="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono">
+                  💰 Deposit: 10 Credits (Ready)
+                </span>
+                <span id="creditsBalancePill" class="text-[11px] px-2 py-0.5 rounded bg-surface-900/90 text-slate-300 border border-surface-700 font-mono">
+                  Balance: <span id="userCreditsDisplay" class="text-emerald-400 font-bold">50</span> cr
+                </span>
+                <span id="priorityPill" class="text-[11px] px-2 py-0.5 rounded bg-surface-900/90 text-slate-300 border border-surface-700 font-mono">
+                  Priority: <span id="userPriorityDisplay" class="text-accent-400 font-bold">1.0x</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -673,6 +767,26 @@
           <div>
             <label for="regWeakSubject" class="block text-[11px] font-semibold uppercase tracking-wider text-rose-400 mb-1">Weak Subject / Need Help In</label>
             <select id="regWeakSubject" required class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select>
+          </div>
+        </div>
+
+        <!-- Track and Role Preference -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="regTrack" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Study Track</label>
+            <select id="regTrack" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-accent-500 focus:outline-none">
+              <option value="exchange" selected>🔄 Peer Exchange (Default)</option>
+              <option value="honor_roll">🏆 Honor-Roll Sprint (8.5+ CGPA)</option>
+            </select>
+          </div>
+          <div>
+            <label for="regRolePreference" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-300 mb-1">Role Preference</label>
+            <select id="regRolePreference" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-accent-500 focus:outline-none">
+              <option value="no_preference" selected>🤝 No Preference</option>
+              <option value="concept_lead">🧠 Concept Lead</option>
+              <option value="scribe">✍️ Scribe</option>
+              <option value="time_tracker">⏱️ Time Tracker</option>
+            </select>
           </div>
         </div>
 

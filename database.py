@@ -29,6 +29,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 96,
         "reliability_score": 96.0,
         "review_count": 8,
+        "track": "honor_roll",
+        "role_preference": "concept_lead",
+        "study_credits": 60,
+        "matching_priority": 1.1,
+        "teaching_sessions_completed": 8,
+        "sessions_taught": 8,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Bennett University CSE-AI sophomore grinding PyTorch & neural architectures."
     },
     {
@@ -47,6 +55,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 98,
         "reliability_score": 98.0,
         "review_count": 11,
+        "track": "honor_roll",
+        "role_preference": "scribe",
+        "study_credits": 75,
+        "matching_priority": 1.2,
+        "teaching_sessions_completed": 16,
+        "sessions_taught": 16,
+        "verified_mentor": 1,
+        "is_mentor": 1,
         "bio": "Bennett ACM chapter member & DSA enthusiast. Loves morning high-focus sprints."
     },
     {
@@ -65,6 +81,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 93,
         "reliability_score": 93.0,
         "review_count": 7,
+        "track": "exchange",
+        "role_preference": "time_tracker",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 4,
+        "sessions_taught": 4,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Bennett Robotics club lead. Hardware & logic circuits whiz seeking DSA support."
     },
     {
@@ -83,6 +107,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 94,
         "reliability_score": 94.0,
         "review_count": 9,
+        "track": "honor_roll",
+        "role_preference": "no_preference",
+        "study_credits": 55,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 6,
+        "sessions_taught": 6,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Full-stack developer at Bennett looking for math study partners for semester projects."
     },
     {
@@ -101,6 +133,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 90,
         "reliability_score": 90.0,
         "review_count": 5,
+        "track": "exchange",
+        "role_preference": "concept_lead",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 3,
+        "sessions_taught": 3,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Linux kernel tinkerer & physics whiz from Bennett University."
     },
 
@@ -121,6 +161,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 95,
         "reliability_score": 95.0,
         "review_count": 8,
+        "track": "honor_roll",
+        "role_preference": "concept_lead",
+        "study_credits": 60,
+        "matching_priority": 1.1,
+        "teaching_sessions_completed": 10,
+        "sessions_taught": 10,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Competitive programmer & LeetCode grinder. Loves late night coding sessions."
     },
     {
@@ -139,6 +187,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 88,
         "reliability_score": 88.0,
         "review_count": 5,
+        "track": "exchange",
+        "role_preference": "scribe",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 2,
+        "sessions_taught": 2,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Full-stack project builder. Needs help mastering recursion and graph algorithms."
     },
     {
@@ -157,6 +213,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 90,
         "reliability_score": 90.0,
         "review_count": 9,
+        "track": "exchange",
+        "role_preference": "time_tracker",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 4,
+        "sessions_taught": 4,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Systems programmer who enjoys threading and memory management deep dives."
     },
     {
@@ -175,6 +239,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 94,
         "reliability_score": 94.0,
         "review_count": 10,
+        "track": "honor_roll",
+        "role_preference": "no_preference",
+        "study_credits": 65,
+        "matching_priority": 1.1,
+        "teaching_sessions_completed": 15,
+        "sessions_taught": 15,
+        "verified_mentor": 1,
+        "is_mentor": 1,
         "bio": "Calculus & linear algebra enthusiast preparing for semester finals."
     },
 
@@ -195,6 +267,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 98,
         "reliability_score": 98.0,
         "review_count": 12,
+        "track": "honor_roll",
+        "role_preference": "concept_lead",
+        "study_credits": 70,
+        "matching_priority": 1.15,
+        "teaching_sessions_completed": 12,
+        "sessions_taught": 12,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Math nerd focused on calculus proofs and morning high-focus sprints."
     },
     {
@@ -213,6 +293,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 92,
         "reliability_score": 92.0,
         "review_count": 7,
+        "track": "exchange",
+        "role_preference": "scribe",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 5,
+        "sessions_taught": 5,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Logic gates & hardware lover. Looking for a study buddy to conquer calculus."
     },
     {
@@ -231,6 +319,14 @@ SEEDED_STUDENTS = [
         "reputation_score": 96,
         "reliability_score": 96.0,
         "review_count": 6,
+        "track": "honor_roll",
+        "role_preference": "time_tracker",
+        "study_credits": 55,
+        "matching_priority": 1.05,
+        "teaching_sessions_completed": 7,
+        "sessions_taught": 7,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Neural networks and Python enthusiast."
     },
     {
@@ -249,9 +345,19 @@ SEEDED_STUDENTS = [
         "reputation_score": 91,
         "reliability_score": 91.0,
         "review_count": 4,
+        "track": "honor_roll",
+        "role_preference": "no_preference",
+        "study_credits": 50,
+        "matching_priority": 1.0,
+        "teaching_sessions_completed": 3,
+        "sessions_taught": 3,
+        "verified_mentor": 0,
+        "is_mentor": 0,
         "bio": "Linux kernel tinkerer and physics enthusiast."
     }
 ]
+
+from datetime import datetime, timedelta, timezone
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -266,6 +372,7 @@ def init_db(force_reset=False):
         cursor.execute("DROP TABLE IF EXISTS students")
         cursor.execute("DROP TABLE IF EXISTS peer_reviews")
         cursor.execute("DROP TABLE IF EXISTS squad_messages")
+        cursor.execute("DROP TABLE IF EXISTS squad_sessions")
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (
@@ -285,9 +392,34 @@ def init_db(force_reset=False):
             reputation_score INTEGER DEFAULT 95,
             reliability_score REAL NOT NULL,
             review_count INTEGER DEFAULT 1,
-            bio TEXT
+            bio TEXT,
+            track TEXT NOT NULL DEFAULT 'exchange',
+            role_preference TEXT NOT NULL DEFAULT 'no_preference',
+            study_credits INTEGER NOT NULL DEFAULT 50,
+            matching_priority REAL NOT NULL DEFAULT 1.0,
+            teaching_sessions_completed INTEGER NOT NULL DEFAULT 0,
+            verified_mentor INTEGER NOT NULL DEFAULT 0,
+            sessions_taught INTEGER NOT NULL DEFAULT 0,
+            is_mentor INTEGER NOT NULL DEFAULT 0
         )
     """)
+
+    # Non-destructive migration for existing tables
+    cursor.execute("PRAGMA table_info(students)")
+    existing_cols = {row["name"] for row in cursor.fetchall()}
+    col_migrations = [
+        ("track", "TEXT NOT NULL DEFAULT 'exchange'"),
+        ("role_preference", "TEXT NOT NULL DEFAULT 'no_preference'"),
+        ("study_credits", "INTEGER NOT NULL DEFAULT 50"),
+        ("matching_priority", "REAL NOT NULL DEFAULT 1.0"),
+        ("teaching_sessions_completed", "INTEGER NOT NULL DEFAULT 0"),
+        ("verified_mentor", "INTEGER NOT NULL DEFAULT 0"),
+        ("sessions_taught", "INTEGER NOT NULL DEFAULT 0"),
+        ("is_mentor", "INTEGER NOT NULL DEFAULT 0")
+    ]
+    for col_name, col_type in col_migrations:
+        if col_name not in existing_cols:
+            cursor.execute(f"ALTER TABLE students ADD COLUMN {col_name} {col_type}")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS peer_reviews (
@@ -315,9 +447,21 @@ def init_db(force_reset=False):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS squad_sessions (
+            squad_id TEXT PRIMARY KEY,
+            college TEXT NOT NULL,
+            sprint_type TEXT NOT NULL DEFAULT '48hr_exam_prep',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active'
+        )
+    """)
     
     cursor.execute("SELECT COUNT(*) as count FROM students")
     count = cursor.fetchone()["count"]
+    conn.commit()
     conn.close()
     
     if count == 0:
@@ -363,6 +507,41 @@ def add_student(data):
         reputation_score = 95
     reliability_score = float(reputation_score)
 
+    # Normalize Track
+    track = (data.get("track") or "exchange").strip().lower()
+    if track not in ["exchange", "honor_roll"]:
+        track = "exchange"
+
+    # Normalize Role Preference
+    role_preference = (data.get("role_preference") or "no_preference").strip().lower()
+    if role_preference not in ["concept_lead", "scribe", "time_tracker", "no_preference"]:
+        role_preference = "no_preference"
+
+    # Study credits & Matching priority
+    try:
+        study_credits = int(data.get("study_credits", 50))
+    except (ValueError, TypeError):
+        study_credits = 50
+
+    try:
+        matching_priority = float(data.get("matching_priority", 1.0))
+    except (ValueError, TypeError):
+        matching_priority = 1.0
+
+    # Teaching sessions & verified mentor / sessions_taught & is_mentor
+    try:
+        raw_taught = data.get("sessions_taught") if data.get("sessions_taught") is not None else data.get("teaching_sessions_completed", 0)
+        sessions_taught = int(raw_taught)
+    except (ValueError, TypeError):
+        sessions_taught = 0
+
+    teaching_sessions_completed = sessions_taught
+
+    raw_mentor = data.get("is_mentor") if data.get("is_mentor") is not None else data.get("verified_mentor", 0)
+    is_explicit_mentor = int(raw_mentor or 0) == 1
+    is_mentor = 1 if is_explicit_mentor or sessions_taught >= 15 else 0
+    verified_mentor = is_mentor
+
     cursor.execute("""
         INSERT INTO students (
             name, college, section, avatar, 
@@ -371,9 +550,12 @@ def add_student(data):
             teach_subject, strong_subject, 
             need_subject, weak_subject, 
             reputation_score, reliability_score, 
-            review_count, bio
+            review_count, bio,
+            track, role_preference, study_credits,
+            matching_priority, teaching_sessions_completed, verified_mentor,
+            sessions_taught, is_mentor
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         data["name"],
         college,
@@ -390,7 +572,15 @@ def add_student(data):
         reputation_score,
         reliability_score,
         int(data.get("review_count", 1)),
-        data.get("bio", "Engineering undergraduate student ready for study sprints.")
+        data.get("bio", "Engineering undergraduate student ready for study sprints."),
+        track,
+        role_preference,
+        study_credits,
+        matching_priority,
+        teaching_sessions_completed,
+        verified_mentor,
+        sessions_taught,
+        is_mentor
     ))
     new_id = cursor.lastrowid
     conn.commit()
@@ -399,6 +589,69 @@ def add_student(data):
     new_student = dict(cursor.fetchone())
     conn.close()
     return new_student
+
+def save_squad_session(squad_id, college, sprint_type="48hr_exam_prep", duration_hours=None):
+    """
+    Persists a squad micro-sprint session with computed expiration.
+    """
+    if not duration_hours:
+        duration_hours = 48 if sprint_type == "48hr_exam_prep" else 168
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=duration_hours)
+    expires_iso = expires_at.isoformat()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT OR REPLACE INTO squad_sessions (squad_id, college, sprint_type, expires_at, status)
+        VALUES (?, ?, ?, ?, 'active')
+    """, (squad_id, college, sprint_type, expires_iso))
+    conn.commit()
+    conn.close()
+    return {
+        "squad_id": squad_id,
+        "college": college,
+        "sprint_type": sprint_type,
+        "expires_at": expires_iso,
+        "status": "active"
+    }
+
+def get_squad_session(squad_id):
+    """
+    Retrieves squad session and performs cron-free expiration check.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM squad_sessions WHERE squad_id = ?", (squad_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+    session_data = dict(row)
+    expires_at_str = session_data.get("expires_at")
+    is_expired = False
+    remaining_seconds = 0
+    if expires_at_str:
+        try:
+            expires_dt = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+            if expires_dt.tzinfo is None:
+                expires_dt = expires_dt.replace(tzinfo=timezone.utc)
+            now_dt = datetime.now(timezone.utc)
+            diff = (expires_dt - now_dt).total_seconds()
+            if diff <= 0:
+                is_expired = True
+                remaining_seconds = 0
+                if session_data.get("status") == "active":
+                    cursor.execute("UPDATE squad_sessions SET status = 'expired' WHERE squad_id = ?", (squad_id,))
+                    conn.commit()
+                    session_data["status"] = "expired"
+            else:
+                remaining_seconds = int(diff)
+        except Exception:
+            pass
+    session_data["is_expired"] = is_expired
+    session_data["remaining_seconds"] = remaining_seconds
+    session_data["remaining_hours"] = round(remaining_seconds / 3600.0, 1)
+    conn.close()
+    return session_data
 
 def get_squad_messages(squad_id, channel=None):
     """
