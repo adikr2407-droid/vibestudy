@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, render_template, send_from_directory
-from database import init_db, get_db, add_student, COLLEGES, get_squad_messages, add_squad_message, init_squad_chat, save_squad_session, get_squad_session
+from database import init_db, get_db, add_student, COLLEGES, get_squad_messages, add_squad_message, init_squad_chat, save_squad_session, get_squad_session, get_student_profile_data
 from matching import find_squad, calculate_compatibility
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -485,6 +485,25 @@ def simulate_peer_reply_route(squad_id):
 def reset_database():
     init_db(force_reset=True, seed_demo=True)
     return jsonify({"status": "success", "message": "Database reset to initial sample campus candidates."})
+
+@app.route("/profile/<int:student_id>")
+def view_profile(student_id):
+    profile_data = get_student_profile_data(student_id)
+    if not profile_data:
+        return render_template(
+            "certificate_denied.html",
+            student=None,
+            error_title="Profile Not Found",
+            error_message=f"No student profile found with ID #{student_id} in the campus network."
+        ), 404
+    return render_template("profile.html", **profile_data)
+
+@app.route("/api/profile/<int:student_id>")
+def api_get_profile(student_id):
+    profile_data = get_student_profile_data(student_id)
+    if not profile_data:
+        return jsonify({"status": "error", "error": f"Student #{student_id} not found."}), 404
+    return jsonify({"status": "success", "profile": profile_data})
 
 @app.route("/certificate/<int:student_id>")
 def view_certificate(student_id):

@@ -637,6 +637,12 @@ function renderSquadResults(squad, initialMessages = null) {
     squadCollegeBadge.textContent = squad.college || user.college || "Same Campus";
   }
 
+  // Update Nav Profile Link to user's profile
+  const navProfileLink = document.getElementById("navProfileLink");
+  if (navProfileLink && user && user.id) {
+    navProfileLink.href = `/profile/${user.id}`;
+  }
+
   // Squad Track & Sprint Badges
   const squadTrackBadge = document.getElementById("squadTrackBadge");
   if (squadTrackBadge) {
@@ -754,9 +760,15 @@ function renderSquadResults(squad, initialMessages = null) {
       </div>
     </div>
 
-    <div class="mt-5 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs text-slate-400">
+    <div class="mt-5 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
       <span>Credits: <strong class="text-emerald-400">${user.study_credits ?? 50}</strong></span>
-      <span class="font-bold text-emerald-400">100% (Session Host)</span>
+      <div class="flex items-center gap-2">
+        <a href="/profile/${user.id || 1}" target="_blank" class="text-[11px] px-2.5 py-1 rounded-md bg-brand-500/20 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/30 font-semibold transition-all flex items-center gap-1">
+          <span>👤</span>
+          <span>View Profile</span>
+        </a>
+        <span class="font-bold text-emerald-400">100% (Session Host)</span>
+      </div>
     </div>
   `;
   grid.appendChild(userCard);
@@ -1051,6 +1063,10 @@ window.loadDemoSamplePeers = loadDemoSamplePeers;
           <span class="font-bold text-slate-200 peer-reliability-score" id="score-${peer.id}">${peer.reliability_score}%</span>
         </div>
         <div class="flex items-center gap-1.5 flex-wrap">
+          <a href="/profile/${peer.id}" target="_blank" class="text-[11px] px-2.5 py-1 rounded-md bg-surface-700 hover:bg-surface-600 text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1 min-h-[36px]" title="View ${peer.name}'s Student Profile">
+            <span>👤</span>
+            <span>Profile</span>
+          </a>
           ${isPeerMentor ? `
             <a href="/certificate/${peer.id}" target="_blank" class="text-[11px] px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white border border-amber-400/40 font-semibold transition-all flex items-center gap-1" title="View Verified Mentor Certificate">
               <span>📜</span>
@@ -1635,7 +1651,11 @@ async function fetchAndRenderPeerPool(college = currentPoolCollegeFilter) {
 
         <div class="mt-3 pt-2 border-t border-surface-800 flex items-center justify-between text-[11px] text-slate-400">
           <span class="text-amber-400 font-mono">★ ${cand.reliability_score}%</span>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-2">
+            <a href="/profile/${cand.id}" target="_blank" class="text-[10px] text-brand-400 hover:text-brand-300 font-semibold underline flex items-center gap-0.5" title="View ${cand.name}'s Profile">
+              <span>👤</span>
+              <span>Profile</span>
+            </a>
             ${isMentor ? `<a href="/certificate/${cand.id}" target="_blank" class="text-[10px] text-amber-400 hover:text-amber-300 font-semibold underline">Certificate</a>` : ''}
             <span class="text-[10px] text-slate-500">${cand.review_count} reviews</span>
           </div>

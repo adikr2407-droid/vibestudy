@@ -373,6 +373,9 @@ def init_db(force_reset=False, seed_demo=False):
         cursor.execute("DROP TABLE IF EXISTS peer_reviews")
         cursor.execute("DROP TABLE IF EXISTS squad_messages")
         cursor.execute("DROP TABLE IF EXISTS squad_sessions")
+        cursor.execute("DROP TABLE IF EXISTS reviews")
+        cursor.execute("DROP TABLE IF EXISTS sessions")
+        cursor.execute("DROP TABLE IF EXISTS session_participants")
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (
@@ -458,6 +461,41 @@ def init_db(force_reset=False, seed_demo=False):
             status TEXT NOT NULL DEFAULT 'active'
         )
     """)
+
+    # Instagram-Style Profile: reviews table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reviewer_id INTEGER,
+            student_id INTEGER NOT NULL,
+            rating INTEGER NOT NULL,
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (reviewer_id) REFERENCES students(id),
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        )
+    """)
+
+    # Instagram-Style Profile: sessions table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            squad_name TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            duration_minutes INTEGER NOT NULL DEFAULT 50,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Instagram-Style Profile: session_participants table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS session_participants (
+            session_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES sessions(id),
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        )
+    """)
     
     cursor.execute("SELECT COUNT(*) as count FROM students")
     count = cursor.fetchone()["count"]
@@ -467,9 +505,134 @@ def init_db(force_reset=False, seed_demo=False):
     # Only seed if explicitly requested or environment variable SEED_DEMO_DATA=1
     auto_seed = seed_demo or (os.environ.get("SEED_DEMO_DATA", "").lower() in ("true", "1", "yes"))
     if auto_seed and count == 0:
-        for s in SEEDED_STUDENTS:
-            add_student(s)
+        seed_demo_students()
         print("Database initialized and students seeded across colleges.")
+
+DUMMY_SESSIONS = [
+    {
+        "squad_name": "Squad Apex Alpha",
+        "subject": "Data Structures & Algorithms",
+        "duration_minutes": 50,
+        "participants": [1, 2, 3]
+    },
+    {
+        "squad_name": "Squad Bennett Focus",
+        "subject": "Operating Systems & Concurrency",
+        "duration_minutes": 50,
+        "participants": [1, 4, 5]
+    },
+    {
+        "squad_name": "Squad Cyber Phoenix",
+        "subject": "Digital Logic & Computer Design",
+        "duration_minutes": 45,
+        "participants": [2, 3, 4]
+    },
+    {
+        "squad_name": "Squad Honor Roll IV",
+        "subject": "Calculus III & Vector Math",
+        "duration_minutes": 60,
+        "participants": [2, 5, 9]
+    },
+    {
+        "squad_name": "Squad Metro Pulse",
+        "subject": "Python Automation & Sockets",
+        "duration_minutes": 50,
+        "participants": [6, 7, 8]
+    },
+    {
+        "squad_name": "Squad Apex Beta",
+        "subject": "Computer Networks & Protocols",
+        "duration_minutes": 50,
+        "participants": [8, 9, 10]
+    },
+    {
+        "squad_name": "Squad Imperial Core",
+        "subject": "Database Systems & SQL Optimization",
+        "duration_minutes": 50,
+        "participants": [10, 11, 12]
+    },
+    {
+        "squad_name": "Squad Bennett Sprint",
+        "subject": "Engineering Physics & Electromagnetics",
+        "duration_minutes": 50,
+        "participants": [1, 3, 13]
+    }
+]
+
+DUMMY_REVIEWS = [
+    {
+        "reviewer_id": 2,
+        "student_id": 1,
+        "rating": 5,
+        "comment": "Super sharp with Python and neural architectures. Patiently explained gradient descent mechanics during our 48-hour exam prep sprint!"
+    },
+    {
+        "reviewer_id": 3,
+        "student_id": 1,
+        "rating": 5,
+        "comment": "Great sprint partner! Punctual, focused, and always ready with concise problem-solving notes."
+    },
+    {
+        "reviewer_id": 1,
+        "student_id": 2,
+        "rating": 5,
+        "comment": "Diya is an exceptional verified mentor! Broke down complex dynamic programming and graph traversals with crystal clarity."
+    },
+    {
+        "reviewer_id": 3,
+        "student_id": 2,
+        "rating": 5,
+        "comment": "Very disciplined Pomodoro pacing. Covered binary tree rotations in record time."
+    },
+    {
+        "reviewer_id": 4,
+        "student_id": 3,
+        "rating": 5,
+        "comment": "Kunal keeps the sprint energized and on track. Fantastic explanations on electromagnetism and circuit loops."
+    },
+    {
+        "reviewer_id": 1,
+        "student_id": 3,
+        "rating": 4,
+        "comment": "Very reliable teammate. Made sure our group notes were clear and organized."
+    },
+    {
+        "reviewer_id": 2,
+        "student_id": 4,
+        "rating": 5,
+        "comment": "Aryan has deep intuition for digital logic gates and hardware simplification. Huge help!"
+    },
+    {
+        "reviewer_id": 5,
+        "student_id": 4,
+        "rating": 4,
+        "comment": "Great focus during our 50-minute Pomodoro sprint. Highly recommended peer."
+    },
+    {
+        "reviewer_id": 2,
+        "student_id": 5,
+        "rating": 5,
+        "comment": "Riddhi solved multiple calculus problem sets with us. Invaluable exam preparation."
+    },
+    {
+        "reviewer_id": 1,
+        "student_id": 5,
+        "rating": 5,
+        "comment": "Super organized concept lead. Shared detailed handwritten formulas."
+    },
+    {
+        "reviewer_id": 8,
+        "student_id": 9,
+        "rating": 5,
+        "comment": "Sneha is a legendary verified mentor. Guided our entire pod through multivariable integration!"
+    },
+    {
+        "reviewer_id": 10,
+        "student_id": 9,
+        "rating": 5,
+        "comment": "10/10 mentor. Empathetic, clear, and makes math intuitive."
+    }
+]
 
 def clear_all_students():
     """Wipes all registered student profiles, messages, and sessions for a completely clean live launch."""
@@ -479,19 +642,194 @@ def clear_all_students():
     cursor.execute("DELETE FROM peer_reviews")
     cursor.execute("DELETE FROM squad_messages")
     cursor.execute("DELETE FROM squad_sessions")
+    cursor.execute("DELETE FROM reviews")
+    cursor.execute("DELETE FROM sessions")
+    cursor.execute("DELETE FROM session_participants")
     try:
-        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('students', 'peer_reviews', 'squad_messages')")
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('students', 'peer_reviews', 'squad_messages', 'reviews', 'sessions', 'session_participants')")
     except Exception:
         pass
     conn.commit()
     conn.close()
     print("All student profiles cleared. Database is 100% clean.")
 
+def seed_demo_sessions_and_reviews():
+    """Seeds dummy study sessions and peer reviews for existing students."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as c FROM sessions")
+    if cursor.fetchone()["c"] > 0:
+        conn.close()
+        return
+
+    # 1. Insert sessions & participants
+    for sess in DUMMY_SESSIONS:
+        cursor.execute("""
+            INSERT INTO sessions (squad_name, subject, duration_minutes)
+            VALUES (?, ?, ?)
+        """, (sess["squad_name"], sess["subject"], sess["duration_minutes"]))
+        sess_id = cursor.lastrowid
+        for st_id in sess["participants"]:
+            cursor.execute("""
+                INSERT INTO session_participants (session_id, student_id)
+                VALUES (?, ?)
+            """, (sess_id, st_id))
+
+    # 2. Insert reviews
+    for rev in DUMMY_REVIEWS:
+        cursor.execute("""
+            INSERT INTO reviews (reviewer_id, student_id, rating, comment)
+            VALUES (?, ?, ?, ?)
+        """, (rev["reviewer_id"], rev["student_id"], rev["rating"], rev["comment"]))
+
+    conn.commit()
+    conn.close()
+
 def seed_demo_students():
-    """Populates the database with default multi-campus seed students."""
+    """Populates the database with default multi-campus seed students, study sessions, and reviews."""
     for s in SEEDED_STUDENTS:
         add_student(s)
-    print("Database seeded with sample campus student profiles.")
+    seed_demo_sessions_and_reviews()
+    print("Database seeded with sample campus student profiles, study sessions, and reviews.")
+
+def get_student_profile_data(student_id):
+    """
+    Fetches full student profile details, stat counters, completed sessions,
+    peer testimonials, and academic badges for the Instagram-style dashboard.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id = ?", (student_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+    
+    student = dict(row)
+    
+    # 1. Fetch sessions
+    cursor.execute("""
+        SELECT s.id, s.squad_name, s.subject, s.duration_minutes, s.completed_at
+        FROM sessions s
+        JOIN session_participants sp ON s.id = sp.session_id
+        WHERE sp.student_id = ?
+        ORDER BY s.id DESC
+    """, (student_id,))
+    session_rows = cursor.fetchall()
+    
+    sessions_list = []
+    total_minutes = 0
+    for s_row in session_rows:
+        s_data = dict(s_row)
+        total_minutes += s_data.get("duration_minutes", 50)
+        # Fetch co-participants
+        cursor.execute("""
+            SELECT st.id, st.name, st.avatar, st.section
+            FROM students st
+            JOIN session_participants sp ON st.id = sp.student_id
+            WHERE sp.session_id = ? AND st.id != ?
+        """, (s_data["id"], student_id))
+        co_peers = [dict(p) for p in cursor.fetchall()]
+        s_data["participants"] = co_peers
+        sessions_list.append(s_data)
+
+    # 2. Fetch reviews
+    cursor.execute("""
+        SELECT r.id, r.reviewer_id, r.student_id, r.rating, r.comment, r.created_at,
+               st.name as reviewer_name, st.avatar as reviewer_avatar, st.section as reviewer_section,
+               st.is_mentor as reviewer_is_mentor
+        FROM reviews r
+        LEFT JOIN students st ON r.reviewer_id = st.id
+        WHERE r.student_id = ?
+        ORDER BY r.id DESC
+    """, (student_id,))
+    reviews_list = [dict(r) for r in cursor.fetchall()]
+
+    conn.close()
+
+    # Calculate Stat Counters
+    total_sprints = len(sessions_list)
+    if total_sprints == 0:
+        base_sprints = max(1, student.get("review_count", 1))
+        hours_studied = round(base_sprints * 0.85, 1)
+    else:
+        hours_studied = round(total_minutes / 60.0, 1)
+
+    raw_taught = student.get("sessions_taught") if student.get("sessions_taught") is not None else student.get("teaching_sessions_completed", 0)
+    sessions_led = int(raw_taught or 0)
+    is_mentor_flag = int(student.get("is_mentor") or student.get("verified_mentor") or 0) == 1
+    if is_mentor_flag:
+        sessions_led = max(15, sessions_led)
+
+    if reviews_list:
+        avg_rating = round(sum(r["rating"] for r in reviews_list) / len(reviews_list), 1)
+    else:
+        rel = student.get("reliability_score") or 95.0
+        avg_rating = round(min(5.0, max(1.0, rel / 20.0)), 1)
+
+    # Badges calculation
+    badges = []
+    if is_mentor_flag or sessions_led >= 15:
+        badges.append({
+            "id": "mentor",
+            "name": "Verified Peer Mentor",
+            "icon": "👑",
+            "color": "amber",
+            "border": "border-amber-400/80 bg-amber-500/10 text-amber-300",
+            "desc": f"{sessions_led}+ Verified Sprints Led across engineering pods."
+        })
+    badges.append({
+        "id": "streak",
+        "name": "Sprint Streak",
+        "icon": "🔥",
+        "color": "rose",
+        "border": "border-rose-400/80 bg-rose-500/10 text-rose-300",
+        "desc": f"Active study momentum with {max(total_sprints, 3)} completed sessions."
+    })
+    teach_subj = student.get("teach_subject") or student.get("strong_subject") or "Algorithms"
+    badges.append({
+        "id": "mastery",
+        "name": f"{teach_subj} Specialist",
+        "icon": "🧠",
+        "color": "emerald",
+        "border": "border-emerald-400/80 bg-emerald-500/10 text-emerald-300",
+        "desc": f"Peer-rated subject specialist ready for asymmetric skill exchange."
+    })
+    badges.append({
+        "id": "pomodoro",
+        "name": "Pomodoro Pioneer",
+        "icon": "⏱️",
+        "color": "indigo",
+        "border": "border-indigo-400/80 bg-indigo-500/10 text-indigo-300",
+        "desc": "High focus retention during synchronized deep work blocks."
+    })
+    if (student.get("reliability_score") or 95) >= 90:
+        badges.append({
+            "id": "reliability",
+            "name": "High Reliability (90%+)",
+            "icon": "🛡️",
+            "color": "cyan",
+            "border": "border-cyan-400/80 bg-cyan-500/10 text-cyan-300",
+            "desc": f"Consistently punctual and focused ({student.get('reliability_score', 95)}% reliability score)."
+        })
+
+    raw_sec = student.get("section", "ENG-A")
+    clean_sec = raw_sec.replace(" ", "-")
+    handle = f"@{clean_sec}"
+
+    return {
+        "student": student,
+        "handle": handle,
+        "stats": {
+            "total_sprints": max(total_sprints, 3 if reviews_list else 1),
+            "hours_studied": hours_studied if hours_studied > 0 else 2.5,
+            "sessions_led": sessions_led,
+            "average_rating": avg_rating
+        },
+        "sessions": sessions_list,
+        "reviews": reviews_list,
+        "badges": badges
+    }
 
 def add_student(data):
     """

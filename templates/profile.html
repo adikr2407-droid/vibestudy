@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ student.name }} ({{ handle }}) — Student Profile | VibeStudy</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+            },
+            accent: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2',
+            },
+            surface: {
+              900: '#0B0F19',
+              850: '#0e1424',
+              800: '#111827',
+              700: '#1F2937',
+              600: '#374151',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    /* Glowing Instagram-style Avatar Rings */
+    .avatar-ring-mentor {
+      background: linear-gradient(135deg, #f59e0b, #eab308, #d97706, #fbbf24);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+    }
+    .avatar-ring-standard {
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4, #3b82f6, #ec4899);
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.35);
+    }
+
+    /* Tab indicator transition */
+    .profile-tab-btn.active {
+      color: #ffffff;
+      border-color: #8b5cf6;
+    }
+    .profile-tab-btn:not(.active) {
+      color: #94a3b8;
+      border-color: transparent;
+    }
+    .profile-tab-btn:not(.active):hover {
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body class="bg-surface-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+
+  <!-- Background Ambient Glow -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-40 left-1/4 w-96 h-96 bg-brand-600/15 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-20 w-96 h-96 bg-accent-500/15 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-20 left-1/3 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="relative z-10 border-b border-surface-700/60 bg-surface-900/80 backdrop-blur-md sticky top-0">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Back Link & Brand -->
+      <div class="flex items-center space-x-3">
+        <a href="/" class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-surface-800 hover:bg-surface-700 text-slate-300 hover:text-white border border-surface-700 transition-all min-h-[38px]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          <span class="hidden sm:inline">Back to Matcher</span>
+          <span class="sm:hidden">Back</span>
+        </a>
+        <div class="h-5 w-px bg-surface-700"></div>
+        <a href="/" class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-accent-500 flex items-center justify-center shadow-md shadow-brand-500/20">
+            <span class="text-sm font-black text-white">⚡</span>
+          </div>
+          <span class="text-base font-bold bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">VibeStudy</span>
+        </a>
+      </div>
+
+      <!-- Campus Badge & Actions -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <span class="text-xs px-3 py-1 rounded-full bg-accent-500/10 text-accent-300 border border-accent-500/30 font-semibold flex items-center gap-1.5">
+          <span>🏛️</span>
+          <span class="truncate max-w-[140px] sm:max-w-[200px]">{{ student.college }}</span>
+        </span>
+        <a href="/" class="text-xs px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold transition-all shadow-md shadow-brand-500/20 min-h-[38px] flex items-center gap-1">
+          <span>✨</span>
+          <span class="hidden sm:inline">Find My Squad</span>
+          <span class="sm:hidden">Squad</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Container -->
+  <main class="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+    <!-- INSTAGRAM-STYLE PROFILE HEADER CARD -->
+    <div class="bg-surface-800/90 border border-surface-700/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+      
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
+        
+        <!-- Circular Avatar with Glowing Ring -->
+        <div class="relative flex-shrink-0">
+          <div class="p-1 rounded-full {{ 'avatar-ring-mentor' if (student.is_mentor == 1 or student.verified_mentor == 1 or (student.sessions_taught >= 15)) else 'avatar-ring-standard' }}">
+            <div class="bg-surface-900 rounded-full p-1">
+              <img 
+                src="{{ student.avatar }}" 
+                alt="{{ student.name }}" 
+                class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover bg-surface-800"
+              />
+            </div>
+          </div>
+          <!-- Corner Badge -->
+          {% if student.is_mentor == 1 or student.verified_mentor == 1 or (student.sessions_taught >= 15) %}
+          <div class="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 border-2 border-surface-900 flex items-center justify-center text-sm shadow-lg shadow-amber-500/40" title="Verified Peer Mentor">
+            👑
+          </div>
+          {% else %}
+          <div class="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-gradient-to-tr from-brand-600 to-accent-400 border-2 border-surface-900 flex items-center justify-center text-sm shadow-lg shadow-brand-500/40" title="Verified Engineering Student">
+            ⚡
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Student Identity & Meta Details -->
+        <div class="flex-1 text-center sm:text-left">
+          
+          <!-- Name, Handle & Verified Badge -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+            <div>
+              <div class="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{{ student.name }}</h1>
+                {% if student.is_mentor == 1 or student.verified_mentor == 1 or (student.sessions_taught >= 15) %}
+                <span class="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full border font-extrabold bg-gradient-to-r from-amber-500/25 to-yellow-500/20 text-amber-300 border-amber-400/60 shadow-md shadow-amber-500/20">
+                  👑 Verified Mentor
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-bold bg-brand-500/20 text-brand-300 border-brand-500/30">
+                  ⚡ Peer Scholar
+                </span>
+                {% endif %}
+              </div>
+              <div class="text-sm font-mono font-semibold text-brand-400 mt-1 flex items-center justify-center sm:justify-start gap-2">
+                <span>{{ handle }}</span>
+                <span>•</span>
+                <span class="text-slate-400 font-sans text-xs">{{ student.section }}</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
+              <button 
+                type="button" 
+                onclick="openEditProfileModal()" 
+                class="px-3.5 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-white text-xs font-semibold border border-surface-600 transition-all shadow-sm min-h-[38px]"
+              >
+                Edit Profile
+              </button>
+              
+              <button 
+                type="button" 
+                onclick="shareProfile()" 
+                id="shareProfileBtn"
+                class="px-3.5 py-1.5 rounded-xl bg-brand-600/25 hover:bg-brand-600 text-brand-300 hover:text-white text-xs font-semibold border border-brand-500/40 transition-all shadow-sm flex items-center gap-1.5 min-h-[38px]"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                <span>Share</span>
+              </button>
+
+              {% if student.is_mentor == 1 or student.verified_mentor == 1 or (student.sessions_taught >= 15) %}
+              <a 
+                href="/certificate/{{ student.id }}" 
+                target="_blank" 
+                class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-extrabold shadow-md shadow-amber-500/25 transition-all flex items-center gap-1 min-h-[38px]"
+                title="View Verified Mentor Diploma"
+              >
+                <span>📜</span>
+                <span>Certificate</span>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- HORIZONTAL STATS BAR (Instagram Style) -->
+          <div class="grid grid-cols-4 gap-2 sm:gap-4 text-center py-3.5 px-2 my-4 border-y border-surface-700/80 bg-surface-900/50 rounded-2xl">
+            <div class="border-r border-surface-700/60 last:border-none">
+              <div class="text-xl sm:text-2xl font-black text-white font-mono">{{ stats.total_sprints }}</div>
+              <div class="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Study Sprints</div>
+            </div>
+            <div class="border-r border-surface-700/60 last:border-none">
+              <div class="text-xl sm:text-2xl font-black text-white font-mono">{{ stats.hours_studied }}</div>
+              <div class="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Hours Studied</div>
+            </div>
+            <div class="border-r border-surface-700/60 last:border-none">
+              <div class="text-xl sm:text-2xl font-black text-amber-300 font-mono">{{ stats.sessions_led }}</div>
+              <div class="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Mentored</div>
+            </div>
+            <div>
+              <div class="text-xl sm:text-2xl font-black text-emerald-400 font-mono flex items-center justify-center gap-1">
+                <span class="text-amber-400 text-lg">★</span>
+                <span>{{ stats.average_rating }}</span>
+              </div>
+              <div class="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold mt-0.5">Avg Rating</div>
+            </div>
+          </div>
+
+          <!-- Bio & Specialty Pills -->
+          <div class="space-y-3 text-left">
+            <p id="profileBioText" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
+              "{{ student.bio or 'Engineering undergraduate student passionate about collaborative study sprints and peer problem-solving.' }}"
+            </p>
+
+            <!-- Specialty Chips -->
+            <div class="flex flex-wrap gap-2 pt-1">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                <span>💪 Can Teach:</span>
+                <span class="font-bold">{{ student.teach_subject or student.strong_subject }}</span>
+              </span>
+
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <span>🎯 Need Help In:</span>
+                <span class="font-bold">{{ student.need_subject or student.weak_subject }}</span>
+              </span>
+
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                <span>{{ '🌙 Night Owl' if (student.study_hours == 'Night Owl' or student.time_pref == 'Night') else '🌅 Early Bird' }}</span>
+              </span>
+
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
+                <span>🎯 Goal:</span>
+                <span class="font-bold">{{ student.target_gpa or student.target_cgpa or 8.5 }} CGPA</span>
+              </span>
+
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface-700 text-slate-300 border border-surface-600 font-mono">
+                <span>{{ '🏆 Honor-Roll Track' if student.track == 'honor_roll' else '🔄 Peer Exchange' }}</span>
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- INSTAGRAM-STYLE TAB NAVIGATION -->
+    <div class="flex border-b border-surface-700/80 mt-8 mb-6 overflow-x-auto scrollbar-none">
+      <button 
+        type="button" 
+        onclick="switchProfileTab('sessions')" 
+        id="tabBtn-sessions"
+        class="profile-tab-btn active flex items-center justify-center gap-2 py-3.5 px-5 text-xs sm:text-sm font-bold border-b-2 transition-all flex-1 sm:flex-initial"
+      >
+        <span>⏱️</span>
+        <span>Study Sessions</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-surface-800 border border-surface-700 text-slate-400 font-mono">{{ sessions|length }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        onclick="switchProfileTab('reviews')" 
+        id="tabBtn-reviews"
+        class="profile-tab-btn flex items-center justify-center gap-2 py-3.5 px-5 text-xs sm:text-sm font-bold border-b-2 transition-all flex-1 sm:flex-initial"
+      >
+        <span>⭐</span>
+        <span>Peer Reviews</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-surface-800 border border-surface-700 text-slate-400 font-mono">{{ reviews|length }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        onclick="switchProfileTab('badges')" 
+        id="tabBtn-badges"
+        class="profile-tab-btn flex items-center justify-center gap-2 py-3.5 px-5 text-xs sm:text-sm font-bold border-b-2 transition-all flex-1 sm:flex-initial"
+      >
+        <span>🏅</span>
+        <span>Academic Badges</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-surface-800 border border-surface-700 text-slate-400 font-mono">{{ badges|length }}</span>
+      </button>
+    </div>
+
+    <!-- TAB PANE 1: STUDY SESSIONS -->
+    <div id="tabPane-sessions" class="tab-pane space-y-4 animate-fadeIn">
+      {% if sessions and sessions|length > 0 %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for sess in sessions %}
+        <div class="p-5 rounded-2xl bg-surface-800/80 border border-surface-700/80 hover:border-brand-500/50 transition-all shadow-md flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+              <span class="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-brand-500/15 text-brand-300 border border-brand-500/30">
+                ⚡ {{ sess.squad_name }}
+              </span>
+              <span class="text-[11px] font-mono text-slate-400 font-semibold flex items-center gap-1">
+                <span>⏱️</span>
+                <span>{{ sess.duration_minutes }} mins</span>
+              </span>
+            </div>
+
+            <h3 class="text-base font-bold text-white mb-2 leading-snug group-hover:text-brand-300 transition-colors">
+              {{ sess.subject }}
+            </h3>
+
+            <div class="text-[11px] text-slate-400 mb-4 flex items-center gap-1.5">
+              <span>📅</span>
+              <span>Completed Study Sprint</span>
+            </div>
+          </div>
+
+          <!-- Co-Participants -->
+          <div class="pt-3 border-t border-surface-700/60 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-[11px] text-slate-400 font-medium">Squad:</span>
+              <div class="flex -space-x-2 overflow-hidden">
+                {% for p in sess.participants %}
+                <a href="/profile/{{ p.id }}" title="{{ p.name }} ({{ p.section }})">
+                  <img src="{{ p.avatar }}" class="inline-block h-7 w-7 rounded-full ring-2 ring-surface-900 bg-surface-800 hover:scale-110 transition-transform" alt="{{ p.name }}" />
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+            <span class="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+              <span>✓</span>
+              <span>Verified Focus</span>
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="p-8 rounded-2xl bg-surface-800/60 border border-surface-700 text-center flex flex-col items-center justify-center">
+        <span class="text-3xl mb-2">⏱️</span>
+        <h4 class="text-base font-bold text-white mb-1">No Study Sprints Completed Yet</h4>
+        <p class="text-xs text-slate-400 max-w-sm mb-4">Complete your first 50-minute Pomodoro study sprint with a matched squad to log session records here.</p>
+        <a href="/" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-all">
+          Find Study Squad
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB PANE 2: PEER REVIEWS -->
+    <div id="tabPane-reviews" class="tab-pane hidden space-y-4 animate-fadeIn">
+      {% if reviews and reviews|length > 0 %}
+      <div class="space-y-3">
+        {% for rev in reviews %}
+        <div class="p-5 rounded-2xl bg-surface-800/80 border border-surface-700/80 hover:border-surface-600 transition-all shadow-md">
+          <div class="flex items-start justify-between gap-3 mb-2.5">
+            <div class="flex items-center space-x-3">
+              <a href="/profile/{{ rev.reviewer_id if rev.reviewer_id else '#' }}">
+                <img 
+                  src="{{ rev.reviewer_avatar or 'https://api.dicebear.com/7.x/bottts/svg?seed=Peer&backgroundColor=b6e3f4' }}" 
+                  class="w-10 h-10 rounded-full bg-surface-900 border border-surface-700 p-0.5" 
+                  alt="{{ rev.reviewer_name or 'Peer' }}" 
+                />
+              </a>
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <a href="/profile/{{ rev.reviewer_id if rev.reviewer_id else '#' }}" class="text-sm font-bold text-white hover:text-brand-300 transition-colors">
+                    {{ rev.reviewer_name or 'Engineering Peer' }}
+                  </a>
+                  {% if rev.reviewer_is_mentor == 1 %}
+                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">👑 Mentor</span>
+                  {% endif %}
+                </div>
+                <div class="text-[11px] text-slate-400">{{ rev.reviewer_section or 'Pod Member' }}</div>
+              </div>
+            </div>
+
+            <!-- Star Rating Display -->
+            <div class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-900 border border-surface-700">
+              <span class="text-amber-400 text-xs">
+                {% for _ in range(rev.rating) %}★{% endfor %}
+              </span>
+              <span class="text-xs font-mono font-bold text-slate-200 ml-1">{{ rev.rating }}.0</span>
+            </div>
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-3">
+            "{{ rev.comment }}"
+          </p>
+
+          <div class="flex items-center gap-2 text-[10px] text-slate-400 flex-wrap">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">✓ Verified Session</span>
+            <span class="px-2 py-0.5 rounded bg-surface-900 border border-surface-700">Punctual & Focused</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="p-8 rounded-2xl bg-surface-800/60 border border-surface-700 text-center flex flex-col items-center justify-center">
+        <span class="text-3xl mb-2">⭐</span>
+        <h4 class="text-base font-bold text-white mb-1">No Peer Reviews Yet</h4>
+        <p class="text-xs text-slate-400 max-w-sm mb-4">Complete study sessions with squad mates to receive peer testimonials and accountability ratings.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB PANE 3: ACADEMIC BADGES -->
+    <div id="tabPane-badges" class="tab-pane hidden space-y-4 animate-fadeIn">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for b in badges %}
+        <div class="p-5 rounded-2xl border {{ b.border }} shadow-lg flex flex-col justify-between transition-all hover:scale-[1.02]">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-surface-900/90 border border-surface-700 flex items-center justify-center text-2xl mb-3 shadow-inner">
+              {{ b.icon }}
+            </div>
+            <h4 class="text-base font-bold text-white mb-1.5">{{ b.name }}</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">{{ b.desc }}</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-surface-700/50 flex items-center justify-between text-[10px] font-mono text-slate-400">
+            <span>OFFICIAL BADGE</span>
+            <span class="text-emerald-400 font-bold">✓ UNLOCKED</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+
+  <!-- EDIT PROFILE MODAL -->
+  <div id="editProfileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-surface-800 border border-surface-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-scaleUp">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white">Edit Student Profile</h3>
+        <button type="button" onclick="closeEditProfileModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+      </div>
+
+      <form id="editProfileForm" onsubmit="saveProfileChanges(event)" class="space-y-4">
+        <div>
+          <label for="editBioInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Bio / Tagline</label>
+          <textarea id="editBioInput" rows="3" class="w-full px-3 py-2 bg-surface-900 border border-surface-600 rounded-xl text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Tell study squad peers what you're working on...">{{ student.bio }}</textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-surface-800 bg-surface-900/90 py-6 text-center text-xs text-slate-500">
+    <p>VibeStudy — Instagram-Style Student Profile Network for Engineering Undergrads.</p>
+  </footer>
+
+  <script>
+    // Tab switching function
+    function switchProfileTab(tabName) {
+      document.querySelectorAll(".profile-tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.add("hidden"));
+
+      const activeBtn = document.getElementById("tabBtn-" + tabName);
+      const activePane = document.getElementById("tabPane-" + tabName);
+
+      if (activeBtn) activeBtn.classList.add("active");
+      if (activePane) activePane.classList.remove("hidden");
+    }
+
+    // Share Profile button logic
+    function shareProfile() {
+      const url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          showProfileToast("🔗 Profile URL copied to clipboard!", "success");
+        }).catch(() => {
+          showProfileToast("Profile URL: " + url, "info");
+        });
+      } else {
+        showProfileToast("Profile URL: " + url, "info");
+      }
+    }
+
+    // Edit Profile Modal
+    function openEditProfileModal() {
+      const modal = document.getElementById("editProfileModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+    function closeEditProfileModal() {
+      const modal = document.getElementById("editProfileModal");
+      if (modal) modal.classList.add("hidden");
+    }
+    function saveProfileChanges(e) {
+      e.preventDefault();
+      const newBio = document.getElementById("editBioInput").value.trim();
+      const bioEl = document.getElementById("profileBioText");
+      if (bioEl && newBio) {
+        bioEl.textContent = `"${newBio}"`;
+      }
+      closeEditProfileModal();
+      showProfileToast("Profile tagline updated!", "success");
+    }
+
+    // Lightweight Toast helper
+    function showProfileToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      if (!container) return;
+      const toast = document.createElement("div");
+      const bg = type === "success" 
+        ? "bg-emerald-500/90 text-white border-emerald-400" 
+        : "bg-surface-800 text-white border-brand-500/40";
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-xl backdrop-blur-md transition-all transform duration-300 translate-y-2 opacity-0 flex items-center gap-2 ${bg}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      });
+
+      setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

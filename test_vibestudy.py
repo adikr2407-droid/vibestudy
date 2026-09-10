@@ -564,5 +564,45 @@ class TestVibeStudy(unittest.TestCase):
         not_found_res = self.client.get("/certificate/999999")
         self.assertEqual(not_found_res.status_code, 404)
 
+    def test_instagram_style_profile_dashboard(self):
+        # 1. Reset and seed demo students
+        init_db(force_reset=True, seed_demo=True)
+        
+        # 2. Test valid profile endpoint (HTML)
+        res = self.client.get("/profile/1")
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn("Ishaan Malhotra", html)
+        self.assertIn("@CSE-AI", html)
+        self.assertIn("Study Sprints", html)
+        self.assertIn("Hours Studied", html)
+        self.assertIn("Mentored", html)
+        self.assertIn("Avg Rating", html)
+        self.assertIn("Academic Badges", html)
+        self.assertIn("Peer Reviews", html)
+
+        # 3. Test API profile endpoint (JSON)
+        api_res = self.client.get("/api/profile/1")
+        self.assertEqual(api_res.status_code, 200)
+        data = api_res.get_json()
+        self.assertEqual(data["status"], "success")
+        profile = data["profile"]
+        self.assertEqual(profile["student"]["name"], "Ishaan Malhotra")
+        self.assertGreaterEqual(profile["stats"]["total_sprints"], 2)
+        self.assertGreaterEqual(len(profile["sessions"]), 2)
+        self.assertGreaterEqual(len(profile["reviews"]), 2)
+        self.assertGreaterEqual(len(profile["badges"]), 3)
+
+        # 4. Test Verified Mentor Profile
+        mentor_res = self.client.get("/profile/2")
+        self.assertEqual(mentor_res.status_code, 200)
+        mentor_html = mentor_res.get_data(as_text=True)
+        self.assertIn("Verified Mentor", mentor_html)
+        self.assertIn("avatar-ring-mentor", mentor_html)
+
+        # 5. Test 404 for non-existent student
+        not_found = self.client.get("/profile/999999")
+        self.assertEqual(not_found.status_code, 404)
+
 if __name__ == "__main__":
     unittest.main()
