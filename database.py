@@ -364,7 +364,7 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db(force_reset=False):
+def init_db(force_reset=False, seed_demo=False):
     conn = get_db()
     cursor = conn.cursor()
     
@@ -464,10 +464,34 @@ def init_db(force_reset=False):
     conn.commit()
     conn.close()
     
-    if count == 0:
+    # Only seed if explicitly requested or environment variable SEED_DEMO_DATA=1
+    auto_seed = seed_demo or (os.environ.get("SEED_DEMO_DATA", "").lower() in ("true", "1", "yes"))
+    if auto_seed and count == 0:
         for s in SEEDED_STUDENTS:
             add_student(s)
         print("Database initialized and students seeded across colleges.")
+
+def clear_all_students():
+    """Wipes all registered student profiles, messages, and sessions for a completely clean live launch."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM students")
+    cursor.execute("DELETE FROM peer_reviews")
+    cursor.execute("DELETE FROM squad_messages")
+    cursor.execute("DELETE FROM squad_sessions")
+    try:
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('students', 'peer_reviews', 'squad_messages')")
+    except Exception:
+        pass
+    conn.commit()
+    conn.close()
+    print("All student profiles cleared. Database is 100% clean.")
+
+def seed_demo_students():
+    """Populates the database with default multi-campus seed students."""
+    for s in SEEDED_STUDENTS:
+        add_student(s)
+    print("Database seeded with sample campus student profiles.")
 
 def add_student(data):
     """

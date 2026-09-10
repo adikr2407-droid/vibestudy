@@ -1,14 +1,18 @@
 import unittest
 import json
 import os
-from database import init_db, get_db, add_student
+from database import init_db, get_db, add_student, clear_all_students
 from matching import calculate_match_score, find_squad
 from app import app
 
 class TestVibeStudy(unittest.TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        clear_all_students()
+
     def setUp(self):
         self.client = app.test_client()
-        init_db(force_reset=True)
+        init_db(force_reset=True, seed_demo=True)
 
     def test_database_seeding(self):
         conn = get_db()

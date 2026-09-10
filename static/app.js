@@ -346,7 +346,7 @@ function autofillDemo() {
   userSectionInput.value = "CSE-A";
   if (userCollegeSelect) userCollegeSelect.value = "Apex Institute of Technology";
   if (userBioInput) userBioInput.value = "Preparing for DSA interviews & system design sprints.";
-  if (saveToPoolCheckbox) saveToPoolCheckbox.checked = true;
+  if (saveToPoolCheckbox) saveToPoolCheckbox.checked = false;
   
   // Select Night Owl
   const nightOwlRadio = document.querySelector('input[name="studyHours"][value="Night Owl"]');
