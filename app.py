@@ -483,8 +483,8 @@ def simulate_peer_reply_route(squad_id):
 
 @app.route("/api/reset", methods=["POST"])
 def reset_database():
-    init_db(force_reset=True)
-    return jsonify({"status": "success", "message": "Database reset to initial 6 candidates."})
+    init_db(force_reset=True, seed_demo=True)
+    return jsonify({"status": "success", "message": "Database reset to initial sample campus candidates."})
 
 @app.route("/certificate/<int:student_id>")
 def view_certificate(student_id):

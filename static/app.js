@@ -26,6 +26,26 @@ const strongSubjectSelect = document.getElementById("strongSubject");
 const weakSubjectSelect = document.getElementById("weakSubject");
 const subjectError = document.getElementById("subjectError");
 
+// Multi-Step Wizard Elements & State
+let currentWizardStep = 1;
+const formStep1 = document.getElementById("formStep1");
+const formStep2 = document.getElementById("formStep2");
+const formStep3 = document.getElementById("formStep3");
+const step1NextBtn = document.getElementById("step1NextBtn");
+const step2BackBtn = document.getElementById("step2BackBtn");
+const step2NextBtn = document.getElementById("step2NextBtn");
+const step3BackBtn = document.getElementById("step3BackBtn");
+const stepBadge = document.getElementById("stepBadge");
+const stepTitleText = document.getElementById("stepTitleText");
+const stepCounterText = document.getElementById("stepCounterText");
+const stepBar1 = document.getElementById("stepBar1");
+const stepBar2 = document.getElementById("stepBar2");
+const stepBar3 = document.getElementById("stepBar3");
+const stepTab1 = document.getElementById("stepTab1");
+const stepTab2 = document.getElementById("stepTab2");
+const stepTab3 = document.getElementById("stepTab3");
+const celebrationCanvas = document.getElementById("celebrationCanvas");
+
 // Header and Pool Elements
 const viewPoolBtn = document.getElementById("viewPoolBtn");
 const headerPeerCount = document.getElementById("headerPeerCount");
@@ -123,6 +143,16 @@ function setupEventListeners() {
   document.querySelectorAll(".track-radio").forEach((radio) => {
     radio.addEventListener("change", updateTrackCardStates);
   });
+
+  // Wizard navigation listeners
+  if (step1NextBtn) step1NextBtn.addEventListener("click", () => goToStep(2));
+  if (step2BackBtn) step2BackBtn.addEventListener("click", () => goToStep(1));
+  if (step2NextBtn) step2NextBtn.addEventListener("click", () => goToStep(3));
+  if (step3BackBtn) step3BackBtn.addEventListener("click", () => goToStep(2));
+
+  if (stepTab1) stepTab1.addEventListener("click", () => goToStep(1));
+  if (stepTab2) stepTab2.addEventListener("click", () => goToStep(2));
+  if (stepTab3) stepTab3.addEventListener("click", () => goToStep(3));
 
   // Demo Fill Button
   quickDemoBtn.addEventListener("click", autofillDemo);
@@ -340,7 +370,93 @@ function filterPoolByCollege(col) {
   fetchAndRenderPeerPool(col);
 }
 
-// Autofill realistic demo data
+// Multi-Step Wizard State Machine
+function goToStep(step) {
+  if (step < 1) step = 1;
+  if (step > 3) step = 3;
+
+  // Validate when advancing forward
+  if (step > currentWizardStep) {
+    for (let s = currentWizardStep; s < step; s++) {
+      if (!validateStep(s)) return;
+    }
+  }
+
+  currentWizardStep = step;
+  updateWizardUI();
+}
+
+function validateStep(step) {
+  if (step === 1) {
+    const name = userNameInput ? userNameInput.value.trim() : "";
+    const section = userSectionInput ? userSectionInput.value.trim() : "";
+    if (!name) {
+      showToast("Please enter your name to continue.", "warning");
+      userNameInput?.focus();
+      return false;
+    }
+    if (!section) {
+      showToast("Please enter your section / branch to continue.", "warning");
+      userSectionInput?.focus();
+      return false;
+    }
+    return true;
+  }
+  if (step === 2) {
+    return true; // Radio & slider already have defaults
+  }
+  if (step === 3) {
+    const strong = strongSubjectSelect ? strongSubjectSelect.value : "";
+    const weak = weakSubjectSelect ? weakSubjectSelect.value : "";
+    if (!strong || !weak) {
+      showToast("Please select both a strong and a weak subject.", "warning");
+      return false;
+    }
+    if (strong.toLowerCase() === weak.toLowerCase()) {
+      showToast("Strong and weak subjects cannot be the same.", "warning");
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+
+function updateWizardUI() {
+  if (formStep1) {
+    formStep1.classList.toggle("hidden", currentWizardStep !== 1);
+    if (currentWizardStep === 1) formStep1.classList.add("animate-fadeIn");
+  }
+  if (formStep2) {
+    formStep2.classList.toggle("hidden", currentWizardStep !== 2);
+    if (currentWizardStep === 2) formStep2.classList.add("animate-fadeIn");
+  }
+  if (formStep3) {
+    formStep3.classList.toggle("hidden", currentWizardStep !== 3);
+    if (currentWizardStep === 3) formStep3.classList.add("animate-fadeIn");
+  }
+
+  // Update badge and title
+  const stepTitles = {
+    1: "Campus & Identity",
+    2: "Habits & Ambition",
+    3: "Skills & Sprints"
+  };
+  if (stepBadge) stepBadge.textContent = currentWizardStep;
+  if (stepTitleText) stepTitleText.textContent = stepTitles[currentWizardStep] || ("Step " + currentWizardStep);
+  if (stepCounterText) stepCounterText.textContent = `Step ${currentWizardStep} of 3`;
+
+  // Update progress bars
+  if (stepBar1) stepBar1.className = `h-1.5 rounded-full transition-all duration-300 ${currentWizardStep >= 1 ? 'bg-brand-500 shadow-sm shadow-brand-500/50' : 'bg-surface-700'}`;
+  if (stepBar2) stepBar2.className = `h-1.5 rounded-full transition-all duration-300 ${currentWizardStep >= 2 ? 'bg-brand-500 shadow-sm shadow-brand-500/50' : 'bg-surface-700'}`;
+  if (stepBar3) stepBar3.className = `h-1.5 rounded-full transition-all duration-300 ${currentWizardStep >= 3 ? 'bg-brand-500 shadow-sm shadow-brand-500/50' : 'bg-surface-700'}`;
+
+  // Update tab labels
+  if (stepTab1) stepTab1.className = `transition-colors truncate ${currentWizardStep === 1 ? 'text-brand-300 font-bold' : (currentWizardStep > 1 ? 'text-white' : 'text-slate-500')}`;
+  if (stepTab2) stepTab2.className = `transition-colors truncate ${currentWizardStep === 2 ? 'text-brand-300 font-bold' : (currentWizardStep > 2 ? 'text-white' : 'text-slate-500')}`;
+  if (stepTab3) stepTab3.className = `transition-colors truncate ${currentWizardStep === 3 ? 'text-brand-300 font-bold' : 'text-slate-500'}`;
+}
+
+// Autofill realistic demo data across all steps
 function autofillDemo() {
   userNameInput.value = "Aditya Kumar";
   userSectionInput.value = "CSE-A";
@@ -385,7 +501,10 @@ function autofillDemo() {
   }
   checkSubjectConflict();
 
-  showToast("Demo profile loaded: Aditya Kumar (Apex Institute, Concept Lead, 48hr Sprint)", "success");
+  // Jump to Step 3 so user can review all details and submit
+  goToStep(3);
+
+  showToast("⚡ Sample profile populated across all 3 steps! Ready to find squad.", "success");
 }
 
 // Form Submit -> Run Matching Engine
@@ -412,16 +531,19 @@ async function handleFormSubmit(e) {
 
   if (!name) {
     showToast("Please enter your name.", "warning");
+    goToStep(1);
     userNameInput?.focus();
     return;
   }
   if (!section) {
     showToast("Please enter your section / branch.", "warning");
+    goToStep(1);
     userSectionInput?.focus();
     return;
   }
   if (!strong || !weak) {
     showToast("Please select both a strong and a weak subject.", "warning");
+    goToStep(3);
     return;
   }
 
@@ -474,6 +596,9 @@ async function handleFormSubmit(e) {
         scanningSection.classList.add("hidden");
         resultsSection.classList.remove("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
+        if ((currentSquad.top_candidates || []).length > 0) {
+          launchSquadCelebration();
+        }
       } catch (renderErr) {
         console.error("Error rendering squad results:", renderErr);
         scanningSection.classList.add("hidden");
@@ -636,14 +761,188 @@ function renderSquadResults(squad, initialMessages = null) {
   `;
   grid.appendChild(userCard);
 
+// Visual Match Score Gauge Ring (Color-Coded: Green >= 80%, Yellow 50-79%, Red < 50%)
+function getMatchScoreGauge(score) {
+  const clamped = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const r = 18;
+  const c = 2 * Math.PI * r; // ~113.097
+  const offset = c - (c * clamped / 100);
+  
+  let colorClass = "text-rose-400 stroke-rose-400 border-rose-500/30 bg-rose-500/10";
+  let gaugeClass = "gauge-low";
+  let label = "Low";
+  let strokeColor = "#ef4444";
+  
+  if (clamped >= 80) {
+    colorClass = "text-emerald-400 stroke-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+    gaugeClass = "gauge-high";
+    label = "High";
+    strokeColor = "#10b981";
+  } else if (clamped >= 50) {
+    colorClass = "text-amber-400 stroke-amber-400 border-amber-500/30 bg-amber-500/10";
+    gaugeClass = "gauge-mid";
+    label = "Good";
+    strokeColor = "#f59e0b";
+  }
+
+  return `
+    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl border ${colorClass} shadow-sm">
+      <div class="relative w-10 h-10 flex items-center justify-center flex-shrink-0">
+        <svg class="w-10 h-10 -rotate-90 transform" viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="${r}" stroke="currentColor" stroke-width="3.5" class="text-surface-700/60 opacity-30" fill="transparent" />
+          <circle cx="22" cy="22" r="${r}" stroke="${strokeColor}" stroke-width="3.5" class="match-gauge-ring ${gaugeClass}" fill="transparent"
+            stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" stroke-linecap="round" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center font-mono font-black text-[11px]">${clamped}%</span>
+      </div>
+      <div class="flex flex-col text-left leading-tight">
+        <span class="text-[10px] uppercase tracking-wider font-extrabold text-slate-300">Match</span>
+        <span class="text-[11px] font-bold">${label} Synergy</span>
+      </div>
+    </div>
+  `;
+}
+
+// Lightweight Confetti Particle Burst on Squad Match Reveal (Zero External Dependencies)
+function launchSquadCelebration() {
+  const canvas = document.getElementById("celebrationCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.classList.remove("hidden");
+
+  const particles = [];
+  const colors = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#3b82f6", "#ffffff"];
+  const count = 75;
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: window.innerWidth * (0.25 + Math.random() * 0.5),
+      y: window.innerHeight * 0.35 + (Math.random() * 40 - 20),
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.7) * 18 - 4,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 12,
+      gravity: 0.38,
+      friction: 0.96,
+      opacity: 1,
+      decay: Math.random() * 0.015 + 0.012
+    });
+  }
+
+  let animationFrameId;
+  const startTime = Date.now();
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let activeParticles = 0;
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.vx *= p.friction;
+      p.rotation += p.rotationSpeed;
+      p.opacity -= p.decay;
+
+      if (p.opacity > 0 && p.y < canvas.height + 50) {
+        activeParticles++;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
+    });
+
+    if (activeParticles > 0 && Date.now() - startTime < 3500) {
+      animationFrameId = requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.classList.add("hidden");
+      cancelAnimationFrame(animationFrameId);
+    }
+  }
+
+  animate();
+}
+
+// Action button handlers for empty state:
+function switchTrackAndRetry() {
+  const exchangeRadio = document.querySelector('input[name="sessionTrack"][value="exchange"]');
+  const honorRadio = document.querySelector('input[name="sessionTrack"][value="honor_roll"]');
+  if (exchangeRadio && honorRadio) {
+    if (exchangeRadio.checked) {
+      honorRadio.checked = true;
+    } else {
+      exchangeRadio.checked = true;
+    }
+    updateTrackCardStates();
+    showToast("Switched study track! Finding squad...", "info");
+    const form = document.getElementById("onboardingForm");
+    if (form) {
+      form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    }
+  }
+}
+
+async function loadDemoSamplePeers() {
+  try {
+    showToast("Reloading default campus peers...", "info");
+    const res = await fetch("/api/reset", { method: "POST" });
+    const data = await res.json();
+    if (data.status === "success") {
+      showToast("Campus peer pool reloaded! Finding squad now...", "success");
+      await updatePeerPoolCount();
+      const form = document.getElementById("onboardingForm");
+      if (form) {
+        form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+      }
+    } else {
+      showToast(data.error || "Could not reload peers.", "error");
+    }
+  } catch (err) {
+    console.error("Error loading sample peers:", err);
+    showToast("Failed to reload sample peers.", "error");
+  }
+}
+
+window.launchSquadCelebration = launchSquadCelebration;
+window.switchTrackAndRetry = switchTrackAndRetry;
+window.loadDemoSamplePeers = loadDemoSamplePeers;
+
   // 2. Top 3 Matched Peers
   if (topPeers.length === 0) {
     const emptyNotice = document.createElement("div");
-    emptyNotice.className = "col-span-full md:col-span-3 p-6 rounded-2xl bg-surface-800/80 border border-surface-700 text-center flex flex-col items-center justify-center";
+    emptyNotice.className = "col-span-full md:col-span-3 p-8 rounded-2xl bg-surface-800/90 border border-surface-700/80 text-center flex flex-col items-center justify-center shadow-xl backdrop-blur-md animate-fadeIn";
     emptyNotice.innerHTML = `
-      <span class="text-3xl mb-2">🔍</span>
-      <h4 class="text-base font-bold text-white mb-1">No Matching Peers in ${user.college || 'Selected Campus'}</h4>
-      <p class="text-xs text-slate-400 max-w-sm mb-3">No peers matched the current study track and criteria. Try switching tracks or registering more candidates.</p>
+      <div class="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-brand-500/10">
+        🔍
+      </div>
+      <h4 class="text-lg font-extrabold text-white mb-2">No Matching Peers in ${user.college || 'Selected Campus'}</h4>
+      <p class="text-xs text-slate-300 max-w-md mb-6 leading-relaxed">
+        We couldn't find compatible peers matching your current study track and schedule criteria. 
+        Try switching tracks (Exchange ↔ Honor-Roll), adjusting your study hours, or registering new campus profiles.
+      </p>
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        <button type="button" onclick="switchTrackAndRetry()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-brand-500/20 transition-all flex items-center gap-1.5 min-h-[44px]">
+          <span>🔄</span>
+          <span>Switch Track & Retry</span>
+        </button>
+        <button type="button" onclick="openRegisterModal()" class="px-4 py-2.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-white text-xs font-bold border border-surface-600 transition-all flex items-center gap-1.5 min-h-[44px]">
+          <span>➕</span>
+          <span>Register Campus Profile</span>
+        </button>
+        <button type="button" onclick="loadDemoSamplePeers()" class="px-4 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 border border-accent-500/40 text-xs font-bold transition-all flex items-center gap-1.5 min-h-[44px]">
+          <span>⚡</span>
+          <span>Load Demo Sample Peers</span>
+        </button>
+      </div>
     `;
     grid.appendChild(emptyNotice);
   }
@@ -655,7 +954,7 @@ function renderSquadResults(squad, initialMessages = null) {
       : "border border-surface-700/80";
 
     const card = document.createElement("div");
-    card.className = `squad-card-peer rounded-2xl p-5 shadow-lg flex flex-col justify-between relative group transition-all ${cardBorderClasses}`;
+    card.className = `squad-card-peer rounded-2xl p-5 shadow-lg flex flex-col justify-between relative group transition-all animate-scaleUp ${cardBorderClasses}`;
     card.id = `peer-card-${peer.id}`;
 
     const peerRole = getRoleDisplay(peer.assigned_role);
@@ -677,17 +976,15 @@ function renderSquadResults(squad, initialMessages = null) {
 
     card.innerHTML = `
       <div>
-        <!-- Card Top Bar -->
-        <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+        <!-- Card Top Bar with Visual Score Gauge -->
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          ${getMatchScoreGauge(peer.match_score)}
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-accent-500 to-teal-400 text-slate-950 font-black text-xs shadow-sm">
-              ${peer.match_score}% MATCH
-            </span>
-            <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${peerRole.color}">
+            <span class="px-2 py-1 rounded-lg border text-[10px] font-bold ${peerRole.color}">
               ${peerRole.icon} ${peerRole.label}
             </span>
+            <span class="text-xs font-mono text-slate-300 font-bold px-2 py-0.5 rounded bg-surface-900/80 border border-surface-700">${peer.section}</span>
           </div>
-          <span class="text-xs font-mono text-slate-400 font-semibold">${peer.section}</span>
         </div>
         ${peerMentorBadge ? `<div class="mb-2">${peerMentorBadge}</div>` : ''}
 
@@ -760,11 +1057,11 @@ function renderSquadResults(squad, initialMessages = null) {
               <span>View Certificate</span>
             </a>
           ` : ''}
-          <button onclick="switchToChatChannel('dm_${peer.id}')" class="text-[11px] px-2 py-1 rounded-md bg-brand-500/20 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/30 font-semibold transition-all flex items-center gap-1">
+          <button onclick="switchToChatChannel('dm_${peer.id}')" class="text-[11px] px-2 py-1 rounded-md bg-brand-500/20 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/30 font-semibold transition-all flex items-center gap-1 min-h-[36px]">
             <span>💬</span>
             <span>Chat</span>
           </button>
-          <button onclick="openReviewModalForPeer(${peer.id})" class="text-[11px] px-2 py-1 rounded-md bg-surface-700 hover:bg-surface-600 text-slate-300 hover:text-white font-semibold transition-all">
+          <button onclick="openReviewModalForPeer(${peer.id})" class="text-[11px] px-2 py-1 rounded-md bg-surface-700 hover:bg-surface-600 text-slate-300 hover:text-white font-semibold transition-all min-h-[36px]">
             Review
           </button>
         </div>
@@ -786,7 +1083,22 @@ function renderCandidatesTable(candidates) {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  (candidates || []).forEach((cand, idx) => {
+  if (!candidates || candidates.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="6" class="p-8 text-center text-xs text-slate-400">
+        <div class="flex flex-col items-center justify-center gap-2">
+          <span class="text-2xl">📋</span>
+          <span class="font-semibold text-slate-300">No candidate profiles found in this college track to rank.</span>
+          <span class="text-slate-500">Switch tracks or register new profiles to build up the pool.</span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    return;
+  }
+
+  candidates.forEach((cand, idx) => {
     const isTop3 = idx < 3;
     const tr = document.createElement("tr");
     tr.className = isTop3 ? "bg-brand-500/10 hover:bg-brand-500/15" : "hover:bg-surface-850";
@@ -798,6 +1110,10 @@ function renderCandidatesTable(candidates) {
     const schedPts = cand.breakdown ? cand.breakdown.schedule_pts : 0;
     const cgpaPts = cand.breakdown ? cand.breakdown.cgpa_pts : 0;
     const skillPts = cand.breakdown ? cand.breakdown.skill_pts : 0;
+
+    let scoreColor = "text-rose-400";
+    if (cand.match_score >= 80) scoreColor = "text-emerald-400";
+    else if (cand.match_score >= 50) scoreColor = "text-amber-400";
 
     tr.innerHTML = `
       <td class="p-3 font-medium flex items-center gap-2 text-white">
@@ -813,25 +1129,31 @@ function renderCandidatesTable(candidates) {
           <span class="text-slate-400 text-[10px]">${cand.section} • ${roleInfo.icon} ${roleInfo.label}</span>
         </div>
       </td>
-      <td class="p-3 font-mono text-slate-300">
-        +${schedPts} pts
-        <span class="text-[10px] text-slate-400">(${cand.study_hours})</span>
+      <td class="p-3 font-mono">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold point-pill-schedule">
+          +${schedPts} / 40 pts
+        </span>
+        <div class="text-[10px] text-slate-400 mt-0.5">(${cand.study_hours})</div>
       </td>
-      <td class="p-3 font-mono text-slate-300">
-        +${cgpaPts} pts
-        <span class="text-[10px] text-slate-400">(Goal: ${cand.target_cgpa})</span>
+      <td class="p-3 font-mono">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold point-pill-cgpa">
+          +${cgpaPts} / 30 pts
+        </span>
+        <div class="text-[10px] text-slate-400 mt-0.5">(Goal: ${cand.target_cgpa})</div>
       </td>
-      <td class="p-3 font-mono text-slate-300">
-        +${skillPts} pts
-        ${cand.cohesion_score !== undefined ? `<div class="text-[10px] text-emerald-400">Cohesion: ${cand.cohesion_score}%</div>` : ''}
+      <td class="p-3 font-mono">
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold point-pill-skill">
+          +${skillPts} / 30 pts
+        </span>
+        ${cand.cohesion_score !== undefined ? `<div class="text-[10px] text-emerald-400 font-semibold mt-0.5">Cohesion: ${cand.cohesion_score}%</div>` : ''}
       </td>
-      <td class="p-3 font-mono font-bold text-accent-400 text-sm">
+      <td class="p-3 font-mono font-black text-sm ${scoreColor}">
         ${cand.match_score}%
       </td>
       <td class="p-3">
         ${isTop3 
           ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">Selected in Squad</span>' 
-          : '<span class="text-slate-500 text-[10px]">Reserve</span>'}
+          : '<span class="text-slate-500 text-[10px]">Reserve Pool</span>'}
       </td>
     `;
     tbody.appendChild(tr);
@@ -842,6 +1164,9 @@ function renderCandidatesTable(candidates) {
 function resetToOnboarding() {
   resultsSection.classList.add("hidden");
   onboardingSection.classList.remove("hidden");
+  if (typeof goToStep === "function") {
+    goToStep(1);
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
